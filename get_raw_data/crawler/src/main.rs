@@ -10,16 +10,21 @@ use std::sync::mpsc::channel;
 use std::thread;
 
 #[derive(Serialize, Deserialize, Debug)]
-struct Movie {
-    id: usize,
-    original_title: String,
-    popularity: f64,
-    video: bool,
-    adult: bool,
+struct DailyMovie {
+    id: usize
 }
 
+#[derive(Serialize, Deserialize, Debug)]
+struct Movie {
+    budget: usize,
+    revenue: usize
+}
+
+// Construct url for request with given id and api key
 fn make_url(api_key: &String, id: usize) -> String {
-    return format!("https://api.themoviedb.org/3/movie/{}?api_key={}&language=en-US&append_to_response=credits%2Ckeywords%2Csimilar%2Crecommendations", id, api_key);
+    return format!("https://api.themoviedb.org/3/movie/{}\
+        ?api_key={}&language=en-US&append_to_response=\
+        credits%2Ckeywords%2Csimilar%2Crecommendations", id, api_key);
 }
 
 // Extract each id from the daily export file from TMDb API
@@ -29,7 +34,7 @@ fn make_ids(input_file: &String) -> Vec<usize> {
     let reader = BufReader::new(file);
     let mut all_ids = vec![];
     for line in reader.lines() {
-        let movie: Movie = serde_json::from_str(&line.unwrap()).unwrap();
+        let movie: DailyMovie = serde_json::from_str(&line.unwrap()).unwrap();
         all_ids.push(movie.id);
     }
     return all_ids;
@@ -55,6 +60,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     // Args management
     let args: Vec<String> = env::args().collect();
+    if args.len() < 5 {
+        println!("Wrong args");
+        std::process::exit(42)
+    }
     let api_key = &args[1];
     let input_file = &args[2];
     let output_file = &args[3];
@@ -71,12 +80,31 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         let api_key_clone = api_key.clone();
         let done_clone = done.clone();
         let crawler = crawlers.clone();
-        // In each thread, make requests from own thread_ids and send it to writer
+        // In each thread, make requests from own thread_ids
         let thread_ids = make_thread_ids(*threads, i, &ids);
         let handle = thread::spawn(move || {
             for id in thread_ids {
-                let response = reqwest::blocking::get(&make_url(&api_key_clone, id)).unwrap().text().unwrap();
-                crawler.send(response).unwrap();
+                let response = reqwest::blocking::get(&make_url(&api_key_clone, id));
+                match response {
+                    Ok(data) => {
+                        // If request succeed, check if movie's revenue and budget
+                        // are greater than zero. In this case, send movie to writer.
+                        if data.status().is_success() {
+                            let movie_string = data.text().expect("fail to movie_string");
+                            let movie: Result<Movie, serde_json::error::Error> = serde_json::from_str(&movie_string);
+                            match movie {
+                                Ok(movie) => {
+                                    if movie.budget > 0 && movie.revenue > 0 {
+                                        crawler.send(movie_string).expect("fail to send");
+                                    }
+                                },
+                                _ => ()
+                            }
+                        }
+                    },
+                    _ => ()
+                }
+
             }
             // When done, send "done" message
             crawler.send(done_clone).unwrap();
@@ -89,12 +117,12 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         handle.join().unwrap()
     }
 
-    // Write all responses in a file
+    // Write all movies responses in a file until all threads crawler finish
     let mut output = File::create(output_file).unwrap();
     let mut counter = 0;
     for message in writer {
         if message == done { counter = counter + 1; }
-        else { write!( output, "{}\n", message).unwrap(); }
+        else { write!(output, "{}\n", message).unwrap(); }
         if &counter == threads { break; }
     }
 
