@@ -128,4 +128,5 @@ Nous appliquerons des algorithmes choisis comme PageRank, plus court chemin, ou 
 Nous nous attendons à pouvoir comparer les scores des films entre eux, trouver des communautés d'acteurs/films/genres, ou de voir les genres de films les plus populaires.
 
 ## Planning envisagé
-diagramme de Gantt
+
+![Planning](planning.svg)
