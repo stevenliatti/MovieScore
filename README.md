@@ -86,7 +86,7 @@ Nous pouvons voir que nous avons les informations relatives au budget et revenu 
 https://api.themoviedb.org/3/movie/$id?api_key=$key&language=en-US&append_to_response=credits%2Ckeywords%2Csimilar
 ```
 
-La première étape est d'obtenir tous les films disponibles sur TMDb. Pour cela, l'API offre un export journalier de quelques informations basiques concernant les films, à savoir son id dans TMDb, son titre original, la popularité au sein du site et des indications si présence de vidéos et/ou contenu adulte, un exemple est visible ci-dessous. La seule réelle information qui nous intéresse est l'id, qui nous permet de récuperer les informations du films telles que présentées ci-dessus.
+La première étape est d'obtenir tous les films disponibles sur TMDb. Pour cela, l'API offre un export journalier de quelques informations basiques concernant les films, à savoir son id dans TMDb, son titre original, la popularité au sein du site et des indications si présence de vidéos et/ou contenu adulte, un exemple est visible ci-dessous. Le seul champs qui nous intéresse est l'id, qui nous permet de récuperer plus d'informations sur les films telles que présentées ci-dessus.
 
 ```json
 {
@@ -117,9 +117,9 @@ Nous devons donc parcourir ce fichier, comportant plus de 500'000 films et récu
 
 
 ## Architecture / technos envisagées
-Tout d'abord, un programme est dédié à la récupération de données proprement dites, à partir de l'API fournissant les données en JSON, enregistrant les données pour les films ayant les champs revenu et budget valides. Ensuite, ces données seront manipulées et insérées dans la base de donnée choisie de manière cohérente et selon les besoins de l'interface. Finalement, une interface sera implémentée pour visualiser les graphes obtenus et exécuter des requêtes à la base de données.
+Tout d'abord, un programme est dédié à la récupération de données proprement dites, à partir de l'API fournissant les données en JSON, enregistrant les données pour les films ayant les champs revenu et budget valides. Ensuite, ces données seront manipulées et insérées dans la base de donnée choisie de manière cohérente et selon les besoins de l'interface. Finalement, une interface graphique sera implémentée pour visualiser les graphes obtenus et exécuter des requêtes à la base de données.
 
-Les langages et technologies envisagés sont Scala et/ou Rust pour la partie développement, pour la justesse, l'efficacité et/ou la performance, et OrientDB, ArangoDB ou Neo4j pour la base de données, avec leur langages propres de requêtes.
+Les langages et technologies envisagés sont Scala et/ou Rust pour la partie développement, pour la justesse, l'efficacité et/ou la performance, et OrientDB, ArangoDB ou Neo4j pour la base de données, avec leur propres langages de requêtes.
 
 ## Analyse envisagée
 Nous appliquerons des algorithmes choisis comme PageRank, plus court chemin, ou d'autres algorithmes de centralité pour extraire une plus value intéressante sur les données récoltées.
@@ -129,4 +129,4 @@ Nous nous attendons à pouvoir comparer les scores des films entre eux, trouver 
 
 ## Planning envisagé
 
-![Planning](planning.svg)
+![Planning](report/planning.svg)
