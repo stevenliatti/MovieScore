@@ -126,7 +126,7 @@ Nous devons donc parcourir ce fichier, comportant plus de 500'000 films et récu
 
 # Architecture
 
-![Architecture](report/architecture.png)
+![Architecture](report/architecture.svg)
 
 Tout d'abord, un programme est dédié à la récupération de données proprement dites, à partir de l'API fournissant les données en JSON, enregistrant les données pour les films ayant les champs revenu et budget valides. Ensuite, ces données seront manipulées et insérées dans la base de donnée choisie de manière cohérente et selon les besoins de l'interface. Finalement, une interface graphique sera implémentée pour visualiser les graphes obtenus et exécuter des requêtes à la base de données.
 
@@ -204,7 +204,7 @@ Voir exemple ci-dessous :
 
 # Planning envisagé
 
-![Planning](report/planning.png)
+![Planning](report/planning.svg)
 
 | Étape                  | Délivrables / Workpackage                                                 |
 |------------------------|---------------------------------------------------------------------------|
