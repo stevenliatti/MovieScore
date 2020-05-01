@@ -130,3 +130,82 @@ Nous nous attendons à pouvoir comparer les scores des films entre eux, trouver 
 ## Planning envisagé
 
 ![Planning](report/planning.svg)
+
+#################################################################################################
+
+# Workpackge
+
+## 1) Gestion du projet
+Planning
+
+Delivrable : planning
+
+## 2) State of the art
+## Analyse de l'exsitant
+
+### Méthodes
+Explication de l'analyse de données qu'on à fait
+
+### Analyse technologique
+De nombreuses technologies sont à notre disposition et nous proposent les outils nécessaires à la réalisation de ce projet, notamment au niveau de la base de données mais également pour le front end.
+Nous avons donc comparé ces différentes technologies afin de faire le choix le plus adapté au objectifs du projet et à nos domaine de compétences respectifs.
+
+
+### BDD
+En ce qui concerne la technologie de base de données, nous avons étudié principalement les technologies suivantes :
+#### Neo4j
+Steven ? peut être plus d'infos sur tes recherches ?
+
+#### Orient DB
+Steven ? peut être plus d'infos sur tes recherches ?
+
+Après avoir comparé plus en détail ces deux technologies, nous avons fait le choix de partir sur Neo4j car elle propose une abstraction contenant de nombreuses fonctionnalités integrées à son langage de requête qui permet donc un prétraitemnet des données et par la même occasion faciliter l'utilisation de ces dernières.
+
+
+## 3) Conception architecturre
+
+
+### Use cases
+Voici la liste des principaux uses cases:
+    Un utilisaeur de l'application doit pouvoir : 
+    - Visualiser l'interconnexion (via un graph) entre les différentes entités représentées dans la base de données (films, acteurs, genres)
+    - Modifier l'affichage de ce graph en spécifiant certains citères de recherche
+    - Visualiser (à l'aide du graph) l'importance des films en fonction de leurs score(revenu/prix)
+    - Lister les différents films répértoriés dans notre base
+    - Rechercher un film par son nom
+    - Rechercher un film par son genre
+    - Visualiser les communautés d'acteurs, de genre, de films qui ont des critères communs
+    - Visualiser le plus court chermin entre les entités
+
+Delivrable :
+
+
+## 4) Features
+Voici la liste des différentes fonctionnalités que nous allons réaliser dans le cadre de ce projet :
+    Backend :
+        - Récupération des données sur les films mises à disposition par TMDb
+        - Traitement des ces données pour séléctionner uniquement ce dont nous avons besoin
+        - Calcul d'un score pour les différents films
+        - Insertion des données dans une base de données orientée graph
+    Frontend : 
+        - Visualisation des données sous forme d'interface graphique représentant un graph
+        - Regroupement des données en fonction de certains critères (genre, film etc.)
+        - Regroupement des acteurs en fonction des genres des films dans lesquels ils ont joué
+        - Création de communautés
+        - Recherche spécifique (film, acteur etc.)
+        - Présentation des films en fonction de leurs scores respectifs
+
+## 5) Test validation du projet
+En ce qui concerne la phase de test, nous avons prévu d'effectuer des tests unitaires au niveau des méthodes critiques et complexe, notament celles visant à interogrer la base de données.
+Pour la partie front-end, nous avons prévu d'effectuer une sorte d'audit, en faisant tester l'app à utilisateur externe au projet, afin d'avoir un retour sur l'experience utiliateur de l'interface graphique proposée.
+Une fois l'app developpée, nous avons prévu une liste (ci-dessous) avec les principales fonctionnalités de notra application. Elles seront testée une à une, pour chaque fonctionnalité testée, une colonne correspondante sera renseginée si cette fonctionnalité à été validée ou non avec la possilibté de laisser un commentaire (3ème colone).
+
+Voir exemple ci-dessous :
+
+| Feature   | Validation(OK/KO) | Comment           |
+|-----------|-------------------|-------------------|
+| Recherche | OK                | Request are fast  |
+|           |                   |                   |
+|           |                   |                   |
+
+Delivrable : rapport de test
