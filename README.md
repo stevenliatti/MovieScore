@@ -1,12 +1,20 @@
-# Movie Score
+---
+title: Movie Score
+author:
+- Jeremy Favre
+- Steven Liatti
+papersize : a4
+fontsize : 12pt
+geometry : margin = 3cm
+---
 
-## Buts
+# Buts
 Les buts de ce projet sont de déterminer les scores de films selon leur ratio revenu sur budget, de déterminer l'influence qu'ils ont sur les "peoples" (acteurs et membres de l'équipe de réalisation) qui ont participé aux-dits films et montrer les genres de films les plus populaires.
 
 # Contexte et objectifs
 Ce projet se déroule dans le cadre du cours de Web Mining du master MSE HES-SO. L'objectif principal du projet est de visualiser, sous forme graphe, les relations entre les films, leurs genres et les peoples. Nous appliquons des algorithmes choisis pour déterminer les noeuds du graphe les plus importants, trouver les plus courts chemins entre peoples et former des communautés de films, peoples ou genres.
 
-## Données
+# Données
 Nous utilisons les données provenant de [The Movie Database (TMDb)](https://www.themoviedb.org/) à l'aide de son [API](https://developers.themoviedb.org/3/getting-started). À partir des données d'un film, nous avons tous les éléments nécessaires pour déterminer son score et ses relations aux peoples et genres associés. Ci-dessous un exemple de données retournées par l'API pour le film *Pirates of the Caribbean: The Curse of the Black Pearl* :
 
 ```json
@@ -116,96 +124,93 @@ Nous devons donc parcourir ce fichier, comportant plus de 500'000 films et récu
 
 
 
-## Architecture / technos envisagées
+# Architecture
+
+![Architecture](report/architecture.png)
+
 Tout d'abord, un programme est dédié à la récupération de données proprement dites, à partir de l'API fournissant les données en JSON, enregistrant les données pour les films ayant les champs revenu et budget valides. Ensuite, ces données seront manipulées et insérées dans la base de donnée choisie de manière cohérente et selon les besoins de l'interface. Finalement, une interface graphique sera implémentée pour visualiser les graphes obtenus et exécuter des requêtes à la base de données.
 
-Les langages et technologies envisagés sont Scala et/ou Rust pour la partie développement, pour la justesse, l'efficacité et/ou la performance, et OrientDB, ArangoDB ou Neo4j pour la base de données, avec leur propres langages de requêtes.
+## Uses cases
+Voici la liste des principaux *uses cases* du système : 
 
-## Analyse envisagée
-Nous appliquerons des algorithmes choisis comme PageRank, plus court chemin, ou d'autres algorithmes de centralité pour extraire une plus value intéressante sur les données récoltées.
+- Visualiser l'interconnexion (via un graphe) entre les différentes entités représentées dans la base de données (films, acteurs, genres)
+- Modifier l'affichage de ce graphe en spécifiant certains critères de recherche
+- Visualiser (à l'aide du graphe) l'importance des films en fonction de leurs score (revenu/budget)
+- Lister les différents films répertoriés dans notre base
+- Rechercher films, *peoples* ou genres
+- Visualiser les communautés d'acteurs, de genre ou de films qui ont des critères communs
+- Visualiser le plus court chemin entre deux entités
 
-## Résultats attendus
+# Technologies
+
+Les langages et technologies envisagés sont Scala et/ou Rust pour la partie développement, pour la justesse, l'efficacité et/ou la performance, et OrientDB, ArangoDB ou Neo4j pour la base de données, avec leur propres langages de requêtes. Différents outils pour le frontend / visualisation sont également comparés.
+
+
+## Bases de données
+
+### OrientDB
+OrientDB est une base de données écrite en Java, multi paradigme, stockant ses données sous forme de documents, pair clé-valeur ou graphe. Elle met en avant sa scalabilité horizontale, avec la possibilité de déployer une base OrientDB sur plusieurs machines. Elle utilise un langage de requête optimisé pour les requêtes dans un graphe, nommé Gremlin.
+
+### ArangoDB
+ArangoDB offre à peu près les mêmes fonctionnalités qu'OrientDB, c'est une base de données écrite en C++, multi paradigme, stockant ses données sous forme de documents, pair clé-valeur ou graphe. Elle met en avant des fonctionnalités comme un support pour données géographiques (GeoJSON) ou ArangoML, pipeline pour machine learning. Elle utilise un langage de requête optimisé pour les requêtes dans un graphe, nommé AQL.
+
+### Neo4j
+Noeo4j est une base de données écrite en Java/Scala stockant ses données sous forme de graphe, avec le contenu des données comme noeud ou sommet du graphe et les relations entre ces données comme arête ou arc du graphe. Elle utilise un langage de requête optimisé pour les requêtes dans un graphe, nommé Cypher.
+
+### Bilan des bases de données
+Après avoir comparé ces trois technologies, nous pensons utiliser Neo4j. Bien qu'elle soit moins scalable que les deux autres et apparemment moins performante sur des énormes jeux de données, elle offre nativement d'une part de nombreuses requêtes implémentant des algorithmes de centralité des noeuds de graphes, comme PageRank, ArticleRank ou de plus court chemin et d'autre part des méthodes de visualisation plus faciles à prendre en main. Étant donné le volume de données que nous allons traiter (sur les 500'000 films recensés sur TMDb, nous pensons qu'au moins quelques milliers ou dizaines de milliers ont les informations qui nous intéressent), les défauts apparents de Neo4j sont comblés par ces deux *killer features* qui comblent nos besoins.
+
+## Frontend
+TODO:
+
+
+# Implémentation
+
+## Features
+Voici la liste des différentes fonctionnalités que nous allons réaliser dans le cadre de ce projet :
+
+- Backend :
+
+    - Récupération des données sur les films mises à disposition par TMDb
+    - Traitement de ces données pour sélectionner uniquement ce dont nous avons besoin
+    - Calcul d'un score pour les différents films
+    - Insertion des données dans une base de données orientée graphe
+
+- Frontend : 
+  
+    - Visualisation des données sous forme d'interface graphique représentant un graphe
+    - Regroupement des données en fonction de certains critères (genre, film etc.)
+    - Regroupement des acteurs en fonction des genres des films dans lesquels ils ont joué
+    - Création de communautés
+    - Recherche spécifique (film, acteur etc.)
+    - Présentation des films en fonction de leurs scores respectifs
+
+
+# Résultats attendus
 Nous nous attendons à pouvoir comparer les scores des films entre eux, trouver des communautés d'acteurs/films/genres, ou de voir les genres de films les plus populaires.
 
-## Planning envisagé
-
-![Planning](report/planning.svg)
-
-#################################################################################################
-
-# Workpackge
-
-## 1) Gestion du projet
-Planning
-
-Delivrable : planning
-
-## 2) State of the art
-## Analyse de l'exsitant
-
-### Méthodes
-Explication de l'analyse de données qu'on à fait
-
-### Analyse technologique
-De nombreuses technologies sont à notre disposition et nous proposent les outils nécessaires à la réalisation de ce projet, notamment au niveau de la base de données mais également pour le front end.
-Nous avons donc comparé ces différentes technologies afin de faire le choix le plus adapté au objectifs du projet et à nos domaine de compétences respectifs.
-
-
-### BDD
-En ce qui concerne la technologie de base de données, nous avons étudié principalement les technologies suivantes :
-#### Neo4j
-Steven ? peut être plus d'infos sur tes recherches ?
-
-#### Orient DB
-Steven ? peut être plus d'infos sur tes recherches ?
-
-Après avoir comparé plus en détail ces deux technologies, nous avons fait le choix de partir sur Neo4j car elle propose une abstraction contenant de nombreuses fonctionnalités integrées à son langage de requête qui permet donc un prétraitemnet des données et par la même occasion faciliter l'utilisation de ces dernières.
-
-
-## 3) Conception architecturre
-
-
-### Use cases
-Voici la liste des principaux uses cases:
-    Un utilisaeur de l'application doit pouvoir : 
-    - Visualiser l'interconnexion (via un graph) entre les différentes entités représentées dans la base de données (films, acteurs, genres)
-    - Modifier l'affichage de ce graph en spécifiant certains citères de recherche
-    - Visualiser (à l'aide du graph) l'importance des films en fonction de leurs score(revenu/prix)
-    - Lister les différents films répértoriés dans notre base
-    - Rechercher un film par son nom
-    - Rechercher un film par son genre
-    - Visualiser les communautés d'acteurs, de genre, de films qui ont des critères communs
-    - Visualiser le plus court chermin entre les entités
-
-Delivrable :
-
-
-## 4) Features
-Voici la liste des différentes fonctionnalités que nous allons réaliser dans le cadre de ce projet :
-    Backend :
-        - Récupération des données sur les films mises à disposition par TMDb
-        - Traitement des ces données pour séléctionner uniquement ce dont nous avons besoin
-        - Calcul d'un score pour les différents films
-        - Insertion des données dans une base de données orientée graph
-    Frontend : 
-        - Visualisation des données sous forme d'interface graphique représentant un graph
-        - Regroupement des données en fonction de certains critères (genre, film etc.)
-        - Regroupement des acteurs en fonction des genres des films dans lesquels ils ont joué
-        - Création de communautés
-        - Recherche spécifique (film, acteur etc.)
-        - Présentation des films en fonction de leurs scores respectifs
-
-## 5) Test validation du projet
-En ce qui concerne la phase de test, nous avons prévu d'effectuer des tests unitaires au niveau des méthodes critiques et complexe, notament celles visant à interogrer la base de données.
-Pour la partie front-end, nous avons prévu d'effectuer une sorte d'audit, en faisant tester l'app à utilisateur externe au projet, afin d'avoir un retour sur l'experience utiliateur de l'interface graphique proposée.
-Une fois l'app developpée, nous avons prévu une liste (ci-dessous) avec les principales fonctionnalités de notra application. Elles seront testée une à une, pour chaque fonctionnalité testée, une colonne correspondante sera renseginée si cette fonctionnalité à été validée ou non avec la possilibté de laisser un commentaire (3ème colone).
+## Test de validation du projet
+En ce qui concerne la phase de test, nous avons prévu d'effectuer des tests unitaires au niveau des méthodes critiques et complexes, notament celles visant à interroger la base de données.
+Pour la partie frontend, nous avons prévu d'effectuer une sorte d'audit, en faisant tester l'app à utilisateur externe au projet, afin d'avoir un retour sur l'expérience utilisateur de l'interface graphique proposée.
+Une fois l'app développée, nous avons prévu une liste (ci-dessous) avec les principales fonctionnalités de notre application. Elles seront testées une à une, et, pour chaque fonctionnalité testée, une colonne correspondante sera renseignée si cette fonctionnalité a été validée ou non avec la possibilité de laisser un commentaire (3ème colonne).
 
 Voir exemple ci-dessous :
 
 | Feature   | Validation(OK/KO) | Comment           |
-|-----------|-------------------|-------------------|
-| Recherche | OK                | Request are fast  |
-|           |                   |                   |
+| --------- | ----------------- | ----------------- |
+| Search    | OK                | Request are fast  |
+| Zoom      | OK                | With the mouse    |
 |           |                   |                   |
 
-Delivrable : rapport de test
+# Planning envisagé
+
+![Planning](report/planning.png)
+
+| Étape                  | Délivrables / Workpackage                                                 |
+|------------------------|---------------------------------------------------------------------------|
+| Crawling des données   | Programme récupérant les données de TMDb et produisant des données brutes |
+| Études des technos DB  | Choix final de la base de données                                         |
+| Parsing + insertion DB | Base de données remplie avec des données cohérentes                       |
+| Analyse algos graphes  | Choix final des algorithmes de graphes                                    |
+| Frontend               | GUI disponible pour l'utilisateur final, avec les contrôles désirés       |
+| Rapport                | Version définitive du rapport                                             |
