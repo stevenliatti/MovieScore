@@ -188,6 +188,53 @@ Voici la liste des différentes fonctionnalités que nous allons réaliser dans 
     - Recherche spécifique (film, acteur etc.)
     - Présentation des films en fonction de leurs scores respectifs
 
+## Crawler
+
+Nous avions plusieurs stratégies disponibles pour réaliser notre crawler. La première était de réutiliser notre laboratoire n°1 sur Solr, nous avions déjà crawlé le site TMDb directement. Mais les données qu'il récoltait n'était pas autant complètes que ce que l'API pouvait fournir, il aurait donc fallu l'améliorer. Nous n'étions également pas sûrs de pouvoir exporter les données brutes au format JSON par exemple pour ensuite pouvoir les insérer dans la base de données choisie. Finalement, nous n'étions pas certains de pouvoir correctement le paralléliser pour obtenir rapidement toutes les données (voir la suite). Nous voulions donc interroger l'API TMDb directement.
+
+### Approche naïve avec bash
+
+Pour rappel, comme décrit dans la section Données, nous disposons d'un fichier d'environ 500'000 lignes, contenant tous les ids des films disponibles, comme l'illustre un extrait ci-dessous :
+
+```json
+{"id":3924,"original_title":"Blondie","popularity":2.569,"video":false}
+{"id":2,"original_title":"Ariel","popularity":12.697,"video":false}
+{"id":5,"original_title":"Four Rooms","popularity":13.013,"video":false}
+```
+
+Pour rapidement tester l'automatisation de la récupération de toutes les données des films, nous avons concocté le script bash suivant, qui lit ce fichier d'ids, pour chaque id effectue une requête HTTP à l'API TMDb avec `curl`, puis écrit chaque réponse dans le même fichier, un film/réponse par ligne :
+
+```bash
+#!/usr/bin/env bash
+
+$api_key="..."
+
+for id in $(cat movie_ids.json | jq '.id'); do
+    curl -s "https://api.themoviedb.org/3/movie/$id
+        ?api_key=$api_key&language=en-US&append_to_response
+        =credits%2Ckeywords%2Csimilar" >> movies.json
+        echo "" >> movies.json
+done
+```
+
+Constatant que ce script ne prenait pas en compte les requêtes avec erreur et surtout qu'il récupérait que quelques films par seconde (entre 2 et 3), il nous aurait fallu entre 2 et 3 semaines pour faire les 500'000 requêtes. Ce qui est beaucoup trop long.
+
+### Approche robuste et efficace : programme Rust "distribué"
+
+Jusqu'à fin 2019, l'API TMDb avait une limite d'utilisation à 40 requêtes sur 10 secondes, ou 4 requêtes par seconde. Mais depuis le début de l'année, il n'y a plus de limite. Nous pouvons donc "bombarder" l'API pour récupérer les données aussi vite que désiré. Pour ce faire, nous avons réalisé un crawler multi threads en Rust. Le choix de Rust a été fait pour ses performances, la justesse du code obtenu et pour pratiquer le langage également. Nous nous sommes servis de différents *crates* Rust, comme [reqwest](https://crates.io/crates/reqwest) pour les requêtes HTTP, [serde](https://crates.io/crates/serde) et [serde_json](https://crates.io/crates/serde_json) pour la sérialisation du JSON et de la librairie standard Rust pour la gestion de la concurrence (via les [channels](https://doc.rust-lang.org/rust-by-example/std_misc/channels.html)). Nous avions donc une version améliorée du script bash, plus rapide, robuste et multi core.
+
+Pour accélérer davantage la récupération, nous avions à disposition via `ssh` quelques 70 machines de bureau (Intel 4 cores / 8 threads, 32 Go de RAM, SSD) reliées à internet par des interfaces de 100 Mb/s ou 1 Gb/s. A l'aide d'un deuxième petit programme Rust, le splitter, et de divers commandes Linux comme `parallel-ssh`, nous avons pu séparer le fichier d'ids des films en autant de parts égales que de machines disponibles. Chaque machine a lancé le crawler sur 20 threads avec un fichier d'ids réduit, différent pour chaque machine. Nous avions donc environ l'équivalent de 70 * 20 = 1400 scripts bash initiaux qui récupéraient les informations voulues sur les 500'000 films de TMDb. En quelques minutes, les crawlers terminaient leur job. Avec un dernier script `reduce.sh` et de [`cloudsend.sh`](https://github.com/tavinus/cloudsend.sh), nous avons pu récupérer tous les fichiers produits contenant les informations complètes d'un film, un film par ligne, sur un compte nextcloud en notre possession.
+
+Pour reproduire cette récupération, vous devez disposer de machines GNU/Linux connectées à internet, que vous pouvez contrôler par `ssh`, dont le répertoire `home` est synchronisé sur chacune et remplir le fichier `get_raw_data/.env` d'une manière analogue à la suivante :
+
+```conf
+IPS=ips.txt ; La liste des IPs des machines, une par ligne
+REMOTE_USER=user ; Utilisateur SSH
+REMOTE_HOST=192.168.1.2 ; IP de la machine distante principale, pour init
+REMOTE_WORKING_DIR=working_dir ; Le répertoire de travail courant
+TMDB_API_KEY=1a2b3c4d5e6f7g8h9i0j ; Une clé API pour TMDb
+NEXTCLOUD_UPLOAD=https://your.nextcloud.com/qwertz ; Le répertoire Nextcloud
+```
 
 # Résultats attendus
 Nous nous attendons à pouvoir comparer les scores des films entre eux, trouver des communautés d'acteurs/films/genres, ou de voir les genres de films les plus populaires.

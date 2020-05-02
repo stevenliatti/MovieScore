@@ -1,6 +1,8 @@
 include .env
 export
 
+# Get file from yesterday to be sure that it exists.
+# Depending your timezone, the file of today does not yet exist.
 YESTERDAY = $(shell date --date="yesterday" +%m_%d_%Y)
 
 remote_all: init_remote map_remote reduce_remote
@@ -15,6 +17,7 @@ movie_ids:
 	-wget -nc http://files.tmdb.org/p/exports/movie_ids_$(YESTERDAY).json.gz -O movie_ids.json.gz
 	-gunzip -k movie_ids.json.gz
 
+# In our case, init on only one host, because all hosts homes are synchronized via NFS
 init_remote: crawler/target/release/crawler splitter/target/release/splitter
 	ssh $(REMOTE_USER)@$(REMOTE_HOST) mkdir -p $(REMOTE_WORKING_DIR)
 	scp -r .env makefile $(IPS) map.sh reduce.sh crawler/target/release/crawler splitter/target/release/splitter $(REMOTE_USER)@$(REMOTE_HOST):$(REMOTE_WORKING_DIR)	
