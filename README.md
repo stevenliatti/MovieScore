@@ -148,6 +148,8 @@ Les langages et technologies envisagés sont Scala et/ou Rust pour la partie dé
 
 ## Bases de données
 
+Nous pensons que le modèle de base de données orienté graphe est adapté à notre cas de figure, les différentes entités peuvent être représentées comme des noeuds d'un graphe et les liens les composants peuvent être vus comme des arcs ou arêtes du graphe.
+
 ### OrientDB
 OrientDB est une base de données écrite en Java, multi paradigme, stockant ses données sous forme de documents, pair clé-valeur ou graphe. Elle met en avant sa scalabilité horizontale, avec la possibilité de déployer une base OrientDB sur plusieurs machines. Elle utilise un langage de requête optimisé pour les requêtes dans un graphe, nommé Gremlin.
 
@@ -161,7 +163,8 @@ Noeo4j est une base de données écrite en Java/Scala stockant ses données sous
 Après avoir comparé ces trois technologies, nous pensons utiliser Neo4j. Bien qu'elle soit moins scalable que les deux autres et apparemment moins performante sur des énormes jeux de données, elle offre nativement d'une part de nombreuses requêtes implémentant des algorithmes de centralité des noeuds de graphes, comme PageRank, ArticleRank ou de plus court chemin et d'autre part des méthodes de visualisation plus faciles à prendre en main. Étant donné le volume de données que nous allons traiter (sur les 500'000 films recensés sur TMDb, nous pensons qu'au moins quelques milliers ou dizaines de milliers ont les informations qui nous intéressent), les défauts apparents de Neo4j sont comblés par ces deux *killer features* qui comblent nos besoins.
 
 ## Frontend
-TODO:
+
+Nous envisageons de réaliser l'interface sous forme de page web montrant le graphe des films, *peoples* et genres et avec des contrôles permettant d'exécuter des requêtes. Nous avons trouvé différentes librairies Javascript qui facilitent le dessin de graphes dans le navigateur, telles que [D3.js](https://d3js.org/), [Vis.js](http://visjs.org/), [Sigma.js](http://sigmajs.org/) ou encore [Cytoscape.js](http://js.cytoscape.org/). Toutes proposent une API ou les noeuds et arêtes du graphe peuvent être personnalisés, cela va du choix des couleurs à la taille des noeuds ou arêtes en passant par la position ou manipulation à la souris (zoom, déplacement, etc.). Dans le même sens de simplicité et de facilité d'intégration avec Neo4j, nos choix se portent sur deux autres librairies : [neovis.js](https://github.com/neo4j-contrib/neovis.js) ou [NeoSig](https://github.com/sim51/neosig). Ce sont deux wrappers se basant respectivement sur Vis.js et Sigma.js mais qui facilitent l'intégration avec des données provenant directement de Neo4j.
 
 
 # Implémentation
