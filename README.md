@@ -225,7 +225,7 @@ Jusqu'à fin 2019, l'API TMDb avait une limite d'utilisation à 40 requêtes sur
 
 Pour accélérer davantage la récupération, nous avions à disposition via `ssh` quelques 70 machines de bureau (Intel 4 cores / 8 threads, 32 Go de RAM, SSD) reliées à internet par des interfaces de 100 Mb/s ou 1 Gb/s. A l'aide d'un deuxième petit programme Rust, le splitter, et de divers commandes Linux comme `parallel-ssh`, nous avons pu séparer le fichier d'ids des films en autant de parts égales que de machines disponibles. Chaque machine a lancé le crawler sur 20 threads avec un fichier d'ids réduit, différent pour chaque machine. Nous avions donc environ l'équivalent de 70 * 20 = 1400 scripts bash initiaux qui récupéraient les informations voulues sur les 500'000 films de TMDb. En quelques minutes, les crawlers terminaient leur job. Avec un dernier script `reduce.sh` et de [`cloudsend.sh`](https://github.com/tavinus/cloudsend.sh), nous avons pu récupérer tous les fichiers produits contenant les informations complètes d'un film, un film par ligne, sur un compte nextcloud en notre possession.
 
-Pour reproduire cette récupération, vous devez disposer de machines GNU/Linux connectées à internet, que vous pouvez contrôler par `ssh`, dont le répertoire `home` est synchronisé sur chacune et remplir le fichier `get_raw_data/.env` d'une manière analogue à la suivante :
+Pour reproduire cette récupération, vous devez disposer de machines GNU/Linux connectées à internet, que vous pouvez contrôler par `ssh`, dont le répertoire `home` est synchronisé sur chacune et remplir le fichier `collector/.env` d'une manière analogue à la suivante :
 
 ```conf
 IPS=ips.txt ; La liste des IPs des machines, une par ligne
@@ -236,7 +236,7 @@ TMDB_API_KEY=1a2b3c4d5e6f7g8h9i0j ; Une clé API pour TMDb
 NEXTCLOUD_UPLOAD=https://your.nextcloud.com/qwertz ; Le répertoire Nextcloud
 ```
 
-Un `makefile` est disponible dans `get_raw_data` pour exécuter chaque étape de la récupération.
+Un `makefile` est disponible dans `collector` pour exécuter chaque étape de la récupération.
 
 # Résultats attendus
 Nous nous attendons à pouvoir comparer les scores des films entre eux, trouver des communautés d'acteurs/films/genres, ou de voir les genres de films les plus populaires.
