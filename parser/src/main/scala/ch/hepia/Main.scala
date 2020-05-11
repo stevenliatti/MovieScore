@@ -24,12 +24,21 @@ object Main extends App {
   val movies = Source.fromFile("data/movies.json").getLines
     .map(line => JsonParser(line).convertTo[Movie])
 
-  movies.foreach(m => movieService.insertMovie(m))
+  movies.foreach(m => {
+    val f = movieService.insertMovie(m)
+    Await.result(f, Duration.Inf)
+    m.genres.foreach(g => {
+      val r = movieService.insertGenres(g, m)
+      Await.result(r, Duration.Inf)
+    })
+  })
   // val r = movieService.search("Slackers")
   // r.map(list => list.foreach(println))
   /*val res = Await.result(r, Duration.Inf)
   println(res)*/
-  Thread.sleep(10000)
+  Thread.sleep(3000)
+
+  //     movie.genres.foreach(g => insertGenres(g, movie))
 
   driver.close
 }
