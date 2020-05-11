@@ -4,15 +4,12 @@ import ch.hepia.Domain.{Credits, Genre, Movie}
 import neotypes.Driver
 import neotypes.implicits._
 
-import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration.Duration
 import scala.concurrent.{Await, Future}
-import scala.util.{Failure, Success}
 
 class MovieService(driver: Driver[Future]) {
 
   def insertMovie(movie: Movie): Future[Unit] = driver.readSession { session =>
-
     val score: Double = movie.revenue.toDouble / movie.budget.toDouble
 
     c"""CREATE (movie: Movie {
@@ -22,8 +19,6 @@ class MovieService(driver: Driver[Future]) {
         revenue:${movie.revenue},
         score: $score
      })""".query[Unit].execute(session)
-
-    // insertCredits(movie.credits)
   }
 
   def insertGenres(genre: Genre, m: Movie): Future[Unit] = driver.readSession { session =>

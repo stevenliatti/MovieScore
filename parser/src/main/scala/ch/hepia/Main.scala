@@ -10,17 +10,17 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration.Duration
 import scala.concurrent.{Await, Future}
 
-
-
 object Main extends App {
+
   import JsonFormats._
 
   val config = Config.load()
   val driver = GraphDatabase.driver(config.database.url, AuthTokens.basic(config.database.username, config.database.password))
-
   val movieService = new MovieService(driver.asScala[Future])
 
-
+  val castByMovie = 30
+  val jobsForMovie = List("Director", "Writer", "Screenplay", "Producer",
+    "Director of Photography", "Editor", "Composer", "Special Effects")
   val movies = Source.fromFile("data/movies.json").getLines
     .map(line => JsonParser(line).convertTo[Movie])
 
@@ -30,15 +30,13 @@ object Main extends App {
     m.genres.foreach(g => {
       val r = movieService.insertGenres(g, m)
       Await.result(r, Duration.Inf)
+      val cast = m.credits.cast.filter(c => c.order < castByMovie)
+      val crew = m.credits.crew.filter(c => jobsForMovie.contains(c.job))
+      println(cast, crew)
     })
   })
   // val r = movieService.search("Slackers")
   // r.map(list => list.foreach(println))
-  /*val res = Await.result(r, Duration.Inf)
-  println(res)*/
   Thread.sleep(3000)
-
-  //     movie.genres.foreach(g => insertGenres(g, movie))
-
   driver.close
 }
