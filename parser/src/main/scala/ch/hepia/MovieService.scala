@@ -1,6 +1,6 @@
 package ch.hepia
 
-import ch.hepia.Domain.{Credits, Genre, Movie}
+import ch.hepia.Domain._
 import neotypes.Driver
 import neotypes.implicits._
 
@@ -34,8 +34,20 @@ class MovieService(driver: Driver[Future]) {
        """.query[Unit].execute(session)
   }
 
-  private def insertCredits(credits: Credits): Future[Unit] = driver.readSession { session =>
-    ???
+  def insertActor(actor: Actor, m: Movie): Future[Unit] = driver.readSession { session =>
+    val f = c"""MERGE (actor:People:Actor {
+        id: ${actor.id},
+        name: ${actor.name},
+        gender: ${intToGender(actor.gender)},
+        character: ${actor.character}
+      })""".query[Unit].execute(session)
+
+    Await.result(f, Duration.Inf)
+
+    c"""MATCH (m: Movie {id: ${m.id}})
+        MATCH (a: Actor {id: ${actor.id}})
+        MERGE (a)-[r:PLAY_IN {character: ${actor.character}}]->(m)
+     """.query[Unit].execute(session)
   }
 
   def search(query: String): Future[Seq[Movie]] = driver.readSession { session =>

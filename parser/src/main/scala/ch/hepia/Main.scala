@@ -18,7 +18,7 @@ object Main extends App {
   val driver = GraphDatabase.driver(config.database.url, AuthTokens.basic(config.database.username, config.database.password))
   val movieService = new MovieService(driver.asScala[Future])
 
-  val castByMovie = 30
+  val actorsByMovie = 30
   val jobsForMovie = List("Director", "Writer", "Screenplay", "Producer",
     "Director of Photography", "Editor", "Composer", "Special Effects")
   val movies = Source.fromFile("data/movies.json").getLines
@@ -30,10 +30,15 @@ object Main extends App {
     m.genres.foreach(g => {
       val r = movieService.insertGenres(g, m)
       Await.result(r, Duration.Inf)
-      val cast = m.credits.cast.filter(c => c.order < castByMovie)
-      val crew = m.credits.crew.filter(c => jobsForMovie.contains(c.job))
-      println(cast, crew)
     })
+
+    val actors = m.credits.cast.filter(a => a.order < actorsByMovie)
+    actors.foreach(a => {
+      val s = movieService.insertActor(a, m)
+      Await.result(s, Duration.Inf)
+    })
+
+    //val crew = m.credits.crew.filter(c => jobsForMovie.contains(c.job))
   })
   // val r = movieService.search("Slackers")
   // r.map(list => list.foreach(println))
