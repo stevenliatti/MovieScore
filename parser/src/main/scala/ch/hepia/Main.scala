@@ -12,8 +12,6 @@ import scala.concurrent.{Await, Future}
 
 object Main extends App {
 
-  import JsonFormats._
-
   val config = Config.load()
   val driver = GraphDatabase.driver(config.database.url, AuthTokens.basic(config.database.username, config.database.password))
   val movieService = new MovieService(driver.asScala[Future])
@@ -21,8 +19,7 @@ object Main extends App {
   val actorsByMovie = 30
   val jobsForMovie = List("Director", "Writer", "Screenplay", "Producer",
     "Director of Photography", "Editor", "Composer", "Special Effects")
-  val movies = Source.fromFile("data/movies.json").getLines
-    .map(line => JsonParser(line).convertTo[Movie])
+  val movies = movieService.readMoviesFromFile("data/movies.json")
 
   movies.foreach(m => {
     val f = movieService.insertMovie(m)
@@ -32,13 +29,19 @@ object Main extends App {
       Await.result(r, Duration.Inf)
     })
 
+    // Insert actors
     val actors = m.credits.cast.filter(a => a.order < actorsByMovie)
     actors.foreach(a => {
       val s = movieService.insertActor(a, m)
       Await.result(s, Duration.Inf)
     })
 
-    //val crew = m.credits.crew.filter(c => jobsForMovie.contains(c.job))
+    // Insert movieMakers
+    val movieMakers = m.credits.crew.filter(c => jobsForMovie.contains(c.job))
+    movieMakers.foreach(mm => {
+      val f = movieService.insertMovieMaker(mm, m)
+      Await.result(f, Duration.Inf)
+    })
   })
   // val r = movieService.search("Slackers")
   // r.map(list => list.foreach(println))
