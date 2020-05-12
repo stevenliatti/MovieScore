@@ -7,9 +7,15 @@ object Domain {
     case _ => "Undefined"
   }
 
+  trait People {
+    def id: Int
+    def name: String
+    def gender: Int
+  }
+
   case class Genre(id: Int, name: String)
-  case class Actor(id: Int, name: String, gender: Int, order: Int, character: String)
-  case class MovieMaker(id: Int, name: String, gender: Int, job: String)
+  case class Actor(id: Int, name: String, gender: Int, order: Int, character: String) extends People
+  case class MovieMaker(id: Int, name: String, gender: Int, job: String) extends People
   case class Credits(cast: List[Actor], crew: List[MovieMaker])
   case class Movie(id: Int, title: String, budget: Int, revenue: Int, genres: List[Genre], credits: Credits)
 }

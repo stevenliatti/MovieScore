@@ -29,22 +29,42 @@ object Main extends App {
       Await.result(r, Duration.Inf)
     })
 
-    // Insert actors
+    // Insert actors movieMakers
     val actors = m.credits.cast.filter(a => a.order < actorsByMovie)
-    actors.foreach(a => {
-      val s = movieService.insertActor(a, m)
-      Await.result(s, Duration.Inf)
-    })
-
-    // Insert movieMakers
     val movieMakers = m.credits.crew.filter(c => jobsForMovie.contains(c.job))
-    movieMakers.foreach(mm => {
-      val f = movieService.insertMovieMaker(mm, m)
+    val people = actors ::: movieMakers
+    people.foreach(p => {
+      val f = movieService.insertPeople(p, m)
       Await.result(f, Duration.Inf)
     })
+
+    // Add addKnownForRelation
+    for {
+      people <- people
+      genre <- m.genres
+    } yield movieService.addKnownForRelation(people, genre)
+
+    // knowsPeopleRelation
+    for {
+      p1 <- people
+      p2 <- people
+    } yield if(p1.id != p2.id) {
+      println(s"P1 : $p1 // p2 : $p2")
+      movieService.knowsPeopleRelation(p1, p2)
+    }
+
   })
   // val r = movieService.search("Slackers")
   // r.map(list => list.foreach(println))
-  Thread.sleep(3000)
+  Thread.sleep(3000) // TODO : 2546 noeuds 38435 relations
   driver.close
 }
+
+// Requêtes utiles :
+/*
+Pour choper les relations d'un movie: MATCH p=()-[]->(m: Movie {id: 22})-[b: BELONGS_TO]->() RETURN p, b LIMIT 20
+Relation entre 2 people : MATCH (p2: People {name: 'William Lustig'})<-[r:KNOWS]-(p1: People {name: 'John Landis'}) RETURN p1, p2
+TODO : Voir pour les peoples bidirectionnel
+TODO : Calculer le score du people
+TODO : Voir pour le pb concurence
+ */
