@@ -1,11 +1,8 @@
 package ch.hepia
 
-import ch.hepia.Domain.Movie
-import org.neo4j.driver.v1.{AuthTokens, GraphDatabase}
 import neotypes.implicits._
-import spray.json._
+import org.neo4j.driver.v1.{AuthTokens, GraphDatabase}
 
-import scala.io.Source
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration.Duration
 import scala.concurrent.{Await, Future}
@@ -66,5 +63,7 @@ Pour choper les relations d'un movie: MATCH p=()-[]->(m: Movie {id: 22})-[b: BEL
 Relation entre 2 people : MATCH (p2: People {name: 'William Lustig'})<-[r:KNOWS]-(p1: People {name: 'John Landis'}) RETURN p1, p2
 TODO : Voir pour les peoples bidirectionnel
 TODO : Calculer le score du people
+TODO : map entre people et liste de job/personnages pour avoir PLAY_IN / WORK_IN comme tableau
+TODO : Similar movies ou pas ?
 TODO : Voir pour le pb concurence
  */

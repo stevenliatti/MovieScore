@@ -89,7 +89,7 @@ class MovieService(driver: Driver[Future]) {
   def knowsPeopleRelation(people1: People, people2: People) : Future[Unit] = driver.readSession { session =>
     c"""MATCH (p1: People {id: ${people1.id}})
         MATCH (p2: People {id: ${people2.id}})
-        MERGE (p1)-[r:KNOWS]->(p2)
+        MERGE (p1)-[r:KNOWS]-(p2)
           ON CREATE SET r.count = 1
           ON MATCH SET r.count = r.count+1
      """.query[Unit].execute(session)
