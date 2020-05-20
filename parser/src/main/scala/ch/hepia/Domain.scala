@@ -27,7 +27,7 @@ object Domain {
                     revenue: Int,
                     genres: List[Genre],
                     credits: Credits,
-                    similar: Similar,
-                    recommendations: Recommendations
+                    similar: Option[Similar],
+                    recommendations: Option[Recommendations]
                   )
 }

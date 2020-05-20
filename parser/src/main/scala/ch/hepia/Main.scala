@@ -1,5 +1,6 @@
 package ch.hepia
 
+import ch.hepia.Domain.{MovieId, Recommendations, Similar}
 import neotypes.implicits._
 import org.neo4j.driver.v1.{AuthTokens, GraphDatabase}
 
@@ -54,12 +55,12 @@ object Main extends App {
 
   val similar = for {
     m1 <- movies
-    m2 <- m1.similar.results
+    m2 <- m1.similar.getOrElse(Similar(Nil)).results
   } yield movieService.addSimilarRelation(m1, m2)
 
   val recommendations = for {
     m1 <- movies
-    m2 <- m1.recommendations.results
+    m2 <- m1.recommendations.getOrElse(Recommendations(Nil)).results
   } yield movieService.addRecommendationsRelation(m1, m2)
 
   val fSimilar = Future.sequence(similar)
