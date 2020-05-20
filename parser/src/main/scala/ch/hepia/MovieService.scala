@@ -11,7 +11,7 @@ import scala.io.Source
 
 class MovieService(driver: Driver[Future]) {
 
-  def insertMovie(movie: Movie): Future[Unit] = driver.readSession { session =>
+  def addMovie(movie: Movie): Future[Unit] = driver.readSession { session =>
     val score: Double = movie.revenue.toDouble / movie.budget.toDouble
 
     c"""CREATE (movie: Movie {
@@ -23,7 +23,7 @@ class MovieService(driver: Driver[Future]) {
      })""".query[Unit].execute(session)
   }
 
-  def insertGenres(genre: Genre, m: Movie): Future[Unit] = driver.readSession { session =>
+  def addGenres(genre: Genre, m: Movie): Future[Unit] = driver.readSession { session =>
       val f = c"""MERGE (genre: Genre {
         id: ${genre.id},
         name: ${genre.name}})""".query[Unit].execute(session)
@@ -36,7 +36,7 @@ class MovieService(driver: Driver[Future]) {
        """.query[Unit].execute(session)
   }
 
-  def insertPeople(people: People, m: Movie): Future[Unit] = driver.readSession { session =>
+  def addPeople(people: People, m: Movie): Future[Unit] = driver.readSession { session =>
     people match {
       case a: Actor => {
         val f = c"""MERGE (p:People {
@@ -71,8 +71,6 @@ class MovieService(driver: Driver[Future]) {
     }
   }
 
-
-
   def addKnownForRelation(people: People, genre: Genre) : Future[Unit] = driver.readSession { session =>
     val knownFor = people match {
       case _: Actor => "KNOWS_FOR_ACTING"
@@ -86,12 +84,26 @@ class MovieService(driver: Driver[Future]) {
      """.query[Unit].execute(session)
   }
 
-  def knowsPeopleRelation(people1: People, people2: People) : Future[Unit] = driver.readSession { session =>
+  def addKnowsRelation(people1: People, people2: People) : Future[Unit] = driver.readSession { session =>
     c"""MATCH (p1: People {id: ${people1.id}})
         MATCH (p2: People {id: ${people2.id}})
         MERGE (p1)-[r:KNOWS]-(p2)
           ON CREATE SET r.count = 1
           ON MATCH SET r.count = r.count+1
+     """.query[Unit].execute(session)
+  }
+
+  def addSimilarRelation(movie: Movie, movieId: MovieId) : Future[Unit] = driver.readSession { session =>
+    c"""MATCH (m1: Movie {id: ${movie.id}})
+        MATCH (m2: Movie {id: ${movieId.id}})
+        MERGE (m1)-[r:SIMILAR]-(m2)
+     """.query[Unit].execute(session)
+  }
+
+  def addRecommendationsRelation(movie: Movie, movieId: MovieId) : Future[Unit] = driver.readSession { session =>
+    c"""MATCH (m1: Movie {id: ${movie.id}})
+        MATCH (m2: Movie {id: ${movieId.id}})
+        MERGE (m1)-[r:RECOMMENDATIONS]-(m2)
      """.query[Unit].execute(session)
   }
 

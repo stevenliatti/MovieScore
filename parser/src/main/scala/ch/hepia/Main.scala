@@ -19,10 +19,10 @@ object Main extends App {
   val movies = movieService.readMoviesFromFile("data/movies.json")
 
   movies.foreach(m => {
-    val f = movieService.insertMovie(m)
+    val f = movieService.addMovie(m)
     Await.result(f, Duration.Inf)
     m.genres.foreach(g => {
-      val r = movieService.insertGenres(g, m)
+      val r = movieService.addGenres(g, m)
       Await.result(r, Duration.Inf)
     })
 
@@ -31,7 +31,7 @@ object Main extends App {
     val movieMakers = m.credits.crew.filter(c => jobsForMovie.contains(c.job))
     val people = actors ::: movieMakers
     people.foreach(p => {
-      val f = movieService.insertPeople(p, m)
+      val f = movieService.addPeople(p, m)
       Await.result(f, Duration.Inf)
     })
 
@@ -47,12 +47,27 @@ object Main extends App {
       p2 <- people
     } yield if(p1.id != p2.id) {
       println(s"P1 : $p1 // p2 : $p2")
-      movieService.knowsPeopleRelation(p1, p2)
+      movieService.addKnowsRelation(p1, p2)
     }
 
   })
-  // val r = movieService.search("Slackers")
-  // r.map(list => list.foreach(println))
+
+  val similar = for {
+    m1 <- movies
+    m2 <- m1.similar.results
+  } yield movieService.addSimilarRelation(m1, m2)
+
+  val recommendations = for {
+    m1 <- movies
+    m2 <- m1.recommendations.results
+  } yield movieService.addRecommendationsRelation(m1, m2)
+
+  val fSimilar = Future.sequence(similar)
+  val fRecommendations = Future.sequence(recommendations)
+
+  Await.result(fSimilar, Duration.Inf)
+  Await.result(fRecommendations, Duration.Inf)
+
   Thread.sleep(3000) // TODO : 2546 noeuds 38435 relations
   driver.close
 }
@@ -61,7 +76,6 @@ object Main extends App {
 /*
 Pour choper les relations d'un movie: MATCH p=()-[]->(m: Movie {id: 22})-[b: BELONGS_TO]->() RETURN p, b LIMIT 20
 Relation entre 2 people : MATCH (p2: People {name: 'William Lustig'})<-[r:KNOWS]-(p1: People {name: 'John Landis'}) RETURN p1, p2
-TODO : Voir pour les peoples bidirectionnel
 TODO : Calculer le score du people
 TODO : map entre people et liste de job/personnages pour avoir PLAY_IN / WORK_IN comme tableau
 TODO : Similar movies ou pas ?
