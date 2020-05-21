@@ -1,6 +1,6 @@
 package ch.hepia
 
-import ch.hepia.Domain.{MovieId, Recommendations, Similar}
+import ch.hepia.Domain.{Recommendations, Similar}
 import neotypes.implicits._
 import org.neo4j.driver.v1.{AuthTokens, GraphDatabase}
 
@@ -17,7 +17,7 @@ object Main extends App {
   val actorsByMovie = 30
   val jobsForMovie = List("Director", "Writer", "Screenplay", "Producer",
     "Director of Photography", "Editor", "Composer", "Special Effects")
-  val movies = movieService.readMoviesFromFile("data/movies.json")
+  val movies = movieService.readMoviesFromFile("data/movies.json").toList
 
   movies.foreach(m => {
     val f = movieService.addMovie(m)
@@ -47,7 +47,7 @@ object Main extends App {
       p1 <- people
       p2 <- people
     } yield if(p1.id != p2.id) {
-      println(s"P1 : $p1 // p2 : $p2")
+      println(s"p1 : $p1, p2 : $p2")
       movieService.addKnowsRelation(p1, p2)
     }
 
@@ -56,12 +56,18 @@ object Main extends App {
   val similar = for {
     m1 <- movies
     m2 <- m1.similar.getOrElse(Similar(Nil)).results
-  } yield movieService.addSimilarRelation(m1, m2)
+  } yield {
+    println(s"SIMILAR: Movie.id(${m1.id}), $m2")
+    movieService.addSimilarRelation(m1, m2)
+  }
 
   val recommendations = for {
     m1 <- movies
     m2 <- m1.recommendations.getOrElse(Recommendations(Nil)).results
-  } yield movieService.addRecommendationsRelation(m1, m2)
+  } yield {
+    println(s"RECOMMENDATIONS: Movie.id(${m1.id}), $m2")
+    movieService.addRecommendationsRelation(m1, m2)
+  }
 
   val fSimilar = Future.sequence(similar)
   val fRecommendations = Future.sequence(recommendations)
@@ -70,7 +76,7 @@ object Main extends App {
   Await.result(fRecommendations, Duration.Inf)
 
   Thread.sleep(3000) // TODO : 2546 noeuds 38435 relations
-  driver.close
+  driver.close()
 }
 
 // Requêtes utiles :
@@ -79,6 +85,5 @@ Pour choper les relations d'un movie: MATCH p=()-[]->(m: Movie {id: 22})-[b: BEL
 Relation entre 2 people : MATCH (p2: People {name: 'William Lustig'})<-[r:KNOWS]-(p1: People {name: 'John Landis'}) RETURN p1, p2
 TODO : Calculer le score du people
 TODO : map entre people et liste de job/personnages pour avoir PLAY_IN / WORK_IN comme tableau
-TODO : Similar movies ou pas ?
 TODO : Voir pour le pb concurence
  */
