@@ -46,41 +46,30 @@ object Main extends App {
       Await.result(f, Duration.Inf)
     })
 
-    // TODO: not working, why ?
     // Add addKnownForRelation
     for {
-      people <- people
+      p <- people
       genre <- m.genres
-    } yield movieService.addKnownForRelation(people, genre)
+    } yield movieService.addKnownForRelation(p, genre)
 
     // knowsPeopleRelation
     for {
       p1 <- people
       p2 <- people
-    } yield if(p1.id != p2.id) {
-      println(s"p1 : $p1, p2 : $p2")
-      movieService.addKnowsRelation(p1, p2)
-    }
-
+    } yield if(p1.id != p2.id) movieService.addKnowsRelation(p1, p2)
   })
 
   // Add similar movies for each movie
   val similar = for {
     m1 <- movies
     m2 <- m1.similar.getOrElse(Similar(Nil)).results
-  } yield {
-    println(s"SIMILAR: Movie.id(${m1.id}), $m2")
-    movieService.addSimilarRelation(m1, m2)
-  }
+  } yield movieService.addSimilarRelation(m1, m2)
 
   // Add recommended movies for each movie
   val recommendations = for {
     m1 <- movies
     m2 <- m1.recommendations.getOrElse(Recommendations(Nil)).results
-  } yield {
-    println(s"RECOMMENDATIONS: Movie.id(${m1.id}), $m2")
-    movieService.addRecommendationsRelation(m1, m2)
-  }
+  } yield movieService.addRecommendationsRelation(m1, m2)
 
   val fSimilar = Future.sequence(similar)
   val fRecommendations = Future.sequence(recommendations)

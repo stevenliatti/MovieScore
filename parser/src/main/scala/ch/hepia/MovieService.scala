@@ -83,16 +83,22 @@ class MovieService(driver: Driver[Future]) {
   }
 
   def addKnownForRelation(people: People, genre: Genre) : Future[Unit] = driver.readSession { session =>
-    val knownFor = people match {
-      case _: Actor => "KNOWN_FOR_ACTING"
-      case _: MovieMaker => "KNOWN_FOR_WORKING"
-    }
-    c"""MATCH (p: People {id: ${people.id}})
+    people match {
+      case _: Actor =>
+        c"""MATCH (p: People {id: ${people.id}})
         MATCH (g: Genre {id: ${genre.id}})
-        MERGE (p)-[r:$knownFor]->(g)
+        MERGE (p)-[r:KNOWN_FOR_ACTING]->(g)
           ON CREATE SET r.count = 1
           ON MATCH SET r.count = r.count+1
      """.query[Unit].execute(session)
+      case _: MovieMaker =>
+        c"""MATCH (p: People {id: ${people.id}})
+        MATCH (g: Genre {id: ${genre.id}})
+        MERGE (p)-[r:KNOWN_FOR_WORKING]->(g)
+          ON CREATE SET r.count = 1
+          ON MATCH SET r.count = r.count+1
+     """.query[Unit].execute(session)
+    }
   }
 
   def addKnowsRelation(people1: People, people2: People) : Future[Unit] = driver.readSession { session =>
