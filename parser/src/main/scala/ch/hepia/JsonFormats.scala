@@ -1,9 +1,18 @@
-package ch.hepia
+/**
+ * Movie Score Parser
+ * From JSON movies data, create Neo4j database with nodes
+ * and relationships between Movies, Peoples and Genres
+ * Jeremy Favre & Steven Liatti
+ */
 
+package ch.hepia
 
 import ch.hepia.Domain.{Actor, Credits, Genre, Movie, MovieId, MovieMaker, Recommendations, Similar}
 import spray.json.DefaultJsonProtocol
 
+/**
+ * Formats definitions to parse JSON with spray
+ */
 object JsonFormats  {
   import DefaultJsonProtocol._
 

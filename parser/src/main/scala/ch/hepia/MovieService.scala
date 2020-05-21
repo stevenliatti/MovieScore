@@ -1,3 +1,10 @@
+/**
+ * Movie Score Parser
+ * From JSON movies data, create Neo4j database with nodes
+ * and relationships between Movies, Peoples and Genres
+ * Jeremy Favre & Steven Liatti
+ */
+
 package ch.hepia
 
 import ch.hepia.Domain._
@@ -9,6 +16,12 @@ import scala.concurrent.duration.Duration
 import scala.concurrent.{Await, Future}
 import scala.io.Source
 
+/**
+ * Main service class who read JSON movies
+ * and give methods to add nodes and relationships
+ * in Neo4j with Cypher requests
+ * @param driver neo4j scala driver
+ */
 class MovieService(driver: Driver[Future]) {
 
   def addMovie(movie: Movie): Future[Unit] = driver.readSession { session =>
@@ -38,11 +51,11 @@ class MovieService(driver: Driver[Future]) {
 
   def addPeople(people: People, m: Movie): Future[Unit] = driver.readSession { session =>
     people match {
-      case a: Actor => {
+      case a: Actor =>
         val f = c"""MERGE (p:People {
           id: ${people.id},
           name: ${people.name},
-          gender: ${intToGender(people.gender)}
+          gender: ${people.intToGender()}
         })
         SET p: Actor""".query[Unit].execute(session)
 
@@ -52,12 +65,11 @@ class MovieService(driver: Driver[Future]) {
         MATCH (p: Actor {id: ${people.id}})
         MERGE (p)-[r:PLAY_IN {character: ${a.character}}]->(m)
         """.query[Unit].execute(session)
-      }
-      case mm: MovieMaker => {
+      case mm: MovieMaker =>
         val f = c"""MERGE (p:People {
           id: ${people.id},
           name: ${people.name},
-          gender: ${intToGender(people.gender)}
+          gender: ${people.intToGender()}
         })
         SET p:MovieMaker""".query[Unit].execute(session)
 
@@ -67,7 +79,6 @@ class MovieService(driver: Driver[Future]) {
         MATCH (p: MovieMaker {id: ${people.id}})
         MERGE (p)-[r:WORK_IN {job: ${mm.job}}]->(m)
         """.query[Unit].execute(session)
-      }
     }
   }
 
@@ -107,18 +118,11 @@ class MovieService(driver: Driver[Future]) {
      """.query[Unit].execute(session)
   }
 
-  def readMoviesFromFile(path: String) = {
+  def readMoviesFromFile(path: String): Iterator[Movie] = {
     import JsonFormats._
 
     Source.fromFile(path).getLines
       .map(line => JsonParser(line).convertTo[Movie])
   }
-
-  def search(query: String): Future[Seq[Movie]] = driver.readSession { session =>
-    c"""MATCH (movie:Movie)
-        WHERE lower(movie.title) CONTAINS ${query.toLowerCase}
-        RETURN movie""".query[Movie].list(session)
-  }
-
 
 }

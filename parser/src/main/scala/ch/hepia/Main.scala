@@ -1,3 +1,10 @@
+/**
+ * Movie Score Parser
+ * From JSON movies data, create Neo4j database with nodes
+ * and relationships between Movies, Peoples and Genres
+ * Jeremy Favre & Steven Liatti
+ */
+
 package ch.hepia
 
 import ch.hepia.Domain.{Recommendations, Similar}
@@ -8,6 +15,9 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration.Duration
 import scala.concurrent.{Await, Future}
 
+/**
+ * Program entry point
+ */
 object Main extends App {
 
   val config = Config.load()
@@ -53,6 +63,7 @@ object Main extends App {
 
   })
 
+  // Add similar movies for each movie
   val similar = for {
     m1 <- movies
     m2 <- m1.similar.getOrElse(Similar(Nil)).results
@@ -61,6 +72,7 @@ object Main extends App {
     movieService.addSimilarRelation(m1, m2)
   }
 
+  // Add recommended movies for each movie
   val recommendations = for {
     m1 <- movies
     m2 <- m1.recommendations.getOrElse(Recommendations(Nil)).results
