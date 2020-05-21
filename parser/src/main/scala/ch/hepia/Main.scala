@@ -19,14 +19,14 @@ import scala.concurrent.{Await, Future}
  * Program entry point
  */
 object Main extends App {
+  val actorsByMovie = 30
+  val jobsForMovie = List("Director", "Writer", "Screenplay", "Producer",
+    "Director of Photography", "Editor", "Composer", "Special Effects")
 
   val config = Config.load()
   val driver = GraphDatabase.driver(config.database.url, AuthTokens.basic(config.database.username, config.database.password))
   val movieService = new MovieService(driver.asScala[Future])
 
-  val actorsByMovie = 30
-  val jobsForMovie = List("Director", "Writer", "Screenplay", "Producer",
-    "Director of Photography", "Editor", "Composer", "Special Effects")
   val movies = movieService.readMoviesFromFile("data/movies.json").toList
 
   movies.foreach(m => {

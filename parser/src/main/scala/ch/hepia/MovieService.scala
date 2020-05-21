@@ -24,8 +24,12 @@ import scala.io.Source
  */
 class MovieService(driver: Driver[Future]) {
 
+  private def computeMovieScore(movie: Movie): Double = {
+    movie.revenue.toDouble / movie.budget.toDouble
+  }
+
   def addMovie(movie: Movie): Future[Unit] = driver.readSession { session =>
-    val score: Double = movie.revenue.toDouble / movie.budget.toDouble
+    val score: Double = computeMovieScore(movie)
 
     c"""CREATE (movie: Movie {
         id: ${movie.id},
@@ -49,7 +53,17 @@ class MovieService(driver: Driver[Future]) {
        """.query[Unit].execute(session)
   }
 
+  private def sumPeopleScore(people: People, movie: Movie) = {
+    val movieScore = computeMovieScore(movie)
+    val peopleRank = people match {
+      case a: Actor => (Main.actorsByMovie - a.order).toDouble
+      case _: MovieMaker => 10.0
+    }
+    movieScore / peopleRank
+  }
+
   def addPeople(people: People, m: Movie): Future[Unit] = driver.readSession { session =>
+    val peopleScore = sumPeopleScore(people, m)
     people match {
       case a: Actor =>
         val f = c"""MERGE (p:People {
@@ -57,6 +71,8 @@ class MovieService(driver: Driver[Future]) {
           name: ${people.name},
           gender: ${people.intToGender()}
         })
+        ON CREATE SET p.score = $peopleScore
+        ON MATCH SET p.score = p.score+$peopleScore
         SET p: Actor""".query[Unit].execute(session)
 
         Await.result(f, Duration.Inf)
@@ -71,7 +87,9 @@ class MovieService(driver: Driver[Future]) {
           name: ${people.name},
           gender: ${people.intToGender()}
         })
-        SET p:MovieMaker""".query[Unit].execute(session)
+        ON CREATE SET p.score = $peopleScore
+        ON MATCH SET p.score = p.score+$peopleScore
+        SET p: MovieMaker""".query[Unit].execute(session)
 
         Await.result(f, Duration.Inf)
 
