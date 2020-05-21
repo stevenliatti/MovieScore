@@ -84,7 +84,7 @@ class MovieService(driver: Driver[Future]) {
 
   def addKnownForRelation(people: People, genre: Genre) : Future[Unit] = driver.readSession { session =>
     val knownFor = people match {
-      case _: Actor => "KNOWS_FOR_ACTING"
+      case _: Actor => "KNOWN_FOR_ACTING"
       case _: MovieMaker => "KNOWN_FOR_WORKING"
     }
     c"""MATCH (p: People {id: ${people.id}})

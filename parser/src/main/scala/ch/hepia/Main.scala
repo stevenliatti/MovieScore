@@ -46,6 +46,7 @@ object Main extends App {
       Await.result(f, Duration.Inf)
     })
 
+    // TODO: not working, why ?
     // Add addKnownForRelation
     for {
       people <- people
