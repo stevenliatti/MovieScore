@@ -5,7 +5,7 @@ export
 # Depending your timezone, the file of today does not yet exist.
 YESTERDAY = $(shell date --date="yesterday" +%m_%d_%Y)
 
-remote_all: init_remote map_remote reduce_remote
+remote_all: init_remote map_reduce_remote
 
 crawler/target/release/crawler: crawler/src/* crawler/Cargo.toml
 	cd crawler && cargo build --release
@@ -20,12 +20,9 @@ movie_ids:
 # In our case, init on only one host, because all hosts homes are synchronized via NFS
 init_remote: crawler/target/release/crawler splitter/target/release/splitter
 	ssh $(REMOTE_USER)@$(REMOTE_HOST) mkdir -p $(REMOTE_WORKING_DIR)
-	scp -r .env makefile $(IPS) map.sh reduce.sh crawler/target/release/crawler splitter/target/release/splitter $(REMOTE_USER)@$(REMOTE_HOST):$(REMOTE_WORKING_DIR)	
+	scp -r .env makefile $(IPS) map_reduce.sh crawler/target/release/crawler splitter/target/release/splitter $(REMOTE_USER)@$(REMOTE_HOST):$(REMOTE_WORKING_DIR)
 	ssh $(REMOTE_USER)@$(REMOTE_HOST) "cd $(REMOTE_WORKING_DIR); make movie_ids"
 	ssh $(REMOTE_USER)@$(REMOTE_HOST) "cd $(REMOTE_WORKING_DIR); curl -O 'https://gist.githubusercontent.com/tavinus/93bdbc051728748787dc22a58dfe58d8/raw/cloudsend.sh' && chmod +x cloudsend.sh"
 
-map_remote:
-	parallel-ssh -t 0 --user $(REMOTE_USER) --hosts $(IPS) -i "cd $(REMOTE_WORKING_DIR); ./map.sh"
-
-reduce_remote:
-	parallel-ssh -t 0 --user $(REMOTE_USER) --hosts $(IPS) -i "cd $(REMOTE_WORKING_DIR); ./reduce.sh"
+map_reduce_remote:
+	parallel-ssh -t 0 --user $(REMOTE_USER) --hosts $(IPS) -i "cd $(REMOTE_WORKING_DIR); ./map_reduce.sh"

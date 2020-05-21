@@ -9,15 +9,33 @@ use serde::{Serialize, Deserialize};
 use std::sync::mpsc::channel;
 use std::thread;
 
+const MIN_BUDGET : usize = 1000;
+const MIN_REVENUE : usize = 1000;
+
 #[derive(Serialize, Deserialize, Debug)]
-struct DailyMovie {
+struct IdObject {
     id: usize
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+struct Credits {
+    cast: Vec<IdObject>,
+    crew: Vec<IdObject>
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+struct ConnectedMovies {
+    total_results: usize
 }
 
 #[derive(Serialize, Deserialize, Debug)]
 struct Movie {
     budget: usize,
-    revenue: usize
+    revenue: usize,
+    genres: Vec<IdObject>,
+    credits: Credits,
+    similar: ConnectedMovies,
+    recommendations : ConnectedMovies
 }
 
 // Construct url for request with given id and api key
@@ -34,7 +52,7 @@ fn make_ids(input_file: &String) -> Vec<usize> {
     let reader = BufReader::new(file);
     let mut all_ids = vec![];
     for line in reader.lines() {
-        let movie: DailyMovie = serde_json::from_str(&line.unwrap()).unwrap();
+        let movie: IdObject = serde_json::from_str(&line.unwrap()).unwrap();
         all_ids.push(movie.id);
     }
     return all_ids;
@@ -94,8 +112,15 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                             let movie: Result<Movie, serde_json::error::Error> = serde_json::from_str(&movie_string);
                             match movie {
                                 Ok(movie) => {
-                                    if movie.budget > 0 && movie.revenue > 0 {
-                                        crawler.send(movie_string).expect("fail to send");
+                                    if
+                                        movie.budget > MIN_BUDGET &&
+                                        movie.revenue > MIN_REVENUE &&
+                                        !movie.genres.is_empty() &&
+                                        !movie.credits.cast.is_empty() &&
+                                        !movie.credits.crew.is_empty() &&
+                                        movie.similar.total_results > 0 &&
+                                        movie.recommendations.total_results > 0 {
+                                            crawler.send(movie_string).expect("fail to send");
                                     }
                                 },
                                 _ => ()
