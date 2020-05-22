@@ -71,11 +71,21 @@ object Main extends App {
     m2 <- m1.recommendations.getOrElse(Recommendations(Nil)).results
   } yield movieService.addRecommendationsRelation(m1, m2)
 
+  // TODO: improve allPeople creation
+  // Compute final people score
+  val allPeople = movies.flatMap(
+    m => m.credits.cast.filter(a => a.order < actorsByMovie) :::
+      m.credits.crew.filter(c => jobsForMovie.contains(c.job))
+  ).groupBy(p => p.id).map(idToList => idToList._2.head).toList
+  val finalPeopleScore = allPeople.map(p => movieService.computeFinalPeopleScore(p))
+
   val fSimilar = Future.sequence(similar)
   val fRecommendations = Future.sequence(recommendations)
+  val fFinalPeopleScore = Future.sequence(finalPeopleScore)
 
   Await.result(fSimilar, Duration.Inf)
   Await.result(fRecommendations, Duration.Inf)
+  Await.result(fFinalPeopleScore, Duration.Inf)
 
   Thread.sleep(3000) // TODO : 2546 noeuds 38435 relations
   driver.close()
@@ -85,7 +95,7 @@ object Main extends App {
 /*
 Pour choper les relations d'un movie: MATCH p=()-[]->(m: Movie {id: 22})-[b: BELONGS_TO]->() RETURN p, b LIMIT 20
 Relation entre 2 people : MATCH (p2: People {name: 'William Lustig'})<-[r:KNOWS]-(p1: People {name: 'John Landis'}) RETURN p1, p2
-TODO : Calculer le score du people
 TODO : map entre people et liste de job/personnages pour avoir PLAY_IN / WORK_IN comme tableau
+TODO: améliorer division du score des movie makers
 TODO : Voir pour le pb concurence
  */

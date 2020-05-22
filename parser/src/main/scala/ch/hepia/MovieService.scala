@@ -24,6 +24,8 @@ import scala.io.Source
  */
 class MovieService(driver: Driver[Future]) {
 
+  private val movieMakerScoreDivisor = 50.0
+
   private def computeMovieScore(movie: Movie): Double = {
     movie.revenue.toDouble / movie.budget.toDouble
   }
@@ -53,11 +55,11 @@ class MovieService(driver: Driver[Future]) {
        """.query[Unit].execute(session)
   }
 
-  private def sumPeopleScore(people: People, movie: Movie) = {
+  private def sumPeopleScore(people: People, movie: Movie): Double = {
     val movieScore = computeMovieScore(movie)
     val peopleRank = people match {
       case a: Actor => (Main.actorsByMovie - a.order).toDouble
-      case _: MovieMaker => 10.0
+      case _: MovieMaker => movieMakerScoreDivisor
     }
     movieScore / peopleRank
   }
@@ -66,7 +68,7 @@ class MovieService(driver: Driver[Future]) {
     val peopleScore = sumPeopleScore(people, m)
     people match {
       case a: Actor =>
-        val f = c"""MERGE (p:People {
+          val f = c"""MERGE (p:People {
           id: ${people.id},
           name: ${people.name},
           gender: ${people.intToGender()}
@@ -98,6 +100,17 @@ class MovieService(driver: Driver[Future]) {
         MERGE (p)-[r:WORK_IN {job: ${mm.job}}]->(m)
         """.query[Unit].execute(session)
     }
+  }
+
+  def computeFinalPeopleScore(people: People): Future[Unit] = driver.readSession { session =>
+    val f = c"""MATCH (People {id: ${people.id}})-->(m:Movie) RETURN count(*)"""
+      .query[Int].single(session)
+    
+    val count = Await.result(f, Duration.Inf)
+
+    c"""MATCH (p:People {id: ${people.id}})
+        SET p.score = p.score / $count
+        RETURN p""".query[Unit].execute(session)
   }
 
   def addKnownForRelation(people: People, genre: Genre) : Future[Unit] = driver.readSession { session =>
