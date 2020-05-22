@@ -7,6 +7,8 @@ version := "0.0.1"
 
 scalaVersion := "2.12.10"
 
+mainClass := Some("ch.hepia.Main")
+
 libraryDependencies ++= Seq(
   "io.spray" %%  "spray-json" % "1.3.5",
   "com.github.pureconfig" %% "pureconfig" % "0.9.1",
