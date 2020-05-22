@@ -27,6 +27,14 @@ function draw() {
             "BELONGS_TO": {
                 "caption": false
             },
+            "KNOWN_FOR_ACTING": {
+                "caption": false,
+                "thickness": "count"
+            },
+            "KNOWN_FOR_WORKING": {
+                "caption": false,
+                "thickness": "count"
+            },
             "KNOWS": {
                 "caption": false,
                 "thickness": "count"
@@ -51,3 +59,10 @@ function draw() {
     viz = new NeoVis.default(config);
     viz.render();
 }
+
+$(document).ready(function () {
+    $('#sidebarCollapse').on('click', function () {
+        $('#sidebar').toggleClass('active');
+        $(this).toggleClass('active');
+    });
+});
