@@ -24,7 +24,7 @@ import scala.io.Source
  */
 class MovieService(driver: Driver[Future]) {
 
-  private val movieMakerScoreDivisor = 50.0
+  private val movieMakerScoreDivisor = 2.0
 
   private def computeMovieScore(movie: Movie): Double = {
     movie.revenue.toDouble / movie.budget.toDouble
@@ -58,7 +58,7 @@ class MovieService(driver: Driver[Future]) {
   private def sumPeopleScore(people: People, movie: Movie): Double = {
     val movieScore = computeMovieScore(movie)
     val peopleRank = people match {
-      case a: Actor => (Main.actorsByMovie - a.order).toDouble
+      case a: Actor => (a.order + 1).toDouble
       case _: MovieMaker => movieMakerScoreDivisor
     }
     movieScore / peopleRank
