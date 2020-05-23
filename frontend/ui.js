@@ -17,11 +17,18 @@ function draw() {
                 "size": "score"
             },
             "People": {
+                "caption": "name",
+                "community": "Black"
+            },
+            "Actor": {
+                "caption": "name"
+            },
+            "MovieMaker": {
                 "caption": "name"
             },
             "Genre": {
                 "caption": "name"
-            },
+            }
         },
         relationships: {
             "BELONGS_TO": {
@@ -69,6 +76,15 @@ function execQuery() {
     viz.renderWithCypher(q);
 }
 
+function onSearch() {
+    document.getElementById("searchBar").focus();
+}
+
+function initialQuery() {
+    viz.renderWithCypher(INITIAL_QUERY);
+    updateSearchBar(INITIAL_QUERY);
+}
+
 /*
  * Neo4j request
  */
@@ -108,8 +124,44 @@ function knowledge_people() {
     viz.renderWithCypher(q);
 }
 
+function people_knownFor() {
+    const q = "MATCH r=(a: Actor)-->(g: Genre)<--(mm: MovieMaker) RETURN r LIMIT 200";
+    updateSearchBar(q);
+    viz.renderWithCypher(q);
+}
 
+function all_genres() {
+    const q = "MATCH (n:Genre) RETURN n LIMIT 100";
+    updateSearchBar(q);
+    viz.renderWithCypher(q);
+}
 
+function genres_movies() {
+    const q = ""; //TODO:
+    updateSearchBar(q);
+    viz.renderWithCypher(q);
+}
+
+function genres_peoples() {
+    const q = ""; //TODO:
+    updateSearchBar(q);
+    viz.renderWithCypher(q);
+}
+
+/*
+ * Algos
+ */
+function page_rank() {
+    const q = ""; //TODO:
+    updateSearchBar(q);
+    viz.renderWithCypher(q);
+}
+
+function shortest_path() {
+    const q = "MATCH (p1:People { id: 18262}),(p2:People { id: 104503 }), p = shortestPath((p1)-[r:KNOWS *]-(p2)) RETURN p";
+    updateSearchBar(q);
+    viz.renderWithCypher(q);
+}
 
 
 /*
