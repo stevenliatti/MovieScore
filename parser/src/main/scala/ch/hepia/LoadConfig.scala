@@ -9,14 +9,14 @@ package ch.hepia
 
 import pureconfig.loadConfig
 
-case class Config(database: DatabaseConfig)
+case class LoadConfig(database: DatabaseConfig)
 case class DatabaseConfig(url: String, username: String, password: String)
 
 /**
  * Read app config
  */
-object Config {
-  def load(): Config = loadConfig[Config] match {
+object LoadConfig {
+  def load(): LoadConfig = loadConfig[LoadConfig] match {
     case Right(config) => config
     case Left(error) =>
       throw new RuntimeException("Cannot read config file, errors:\n" + error.toList.mkString("\n"))
