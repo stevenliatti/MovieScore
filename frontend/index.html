@@ -29,13 +29,16 @@
                 <a href="#movieSubmenu" data-toggle="collapse" aria-expanded="false" class="dropdown-toggle">Movie</a>
                 <ul class="collapse list-unstyled" id="movieSubmenu">
                     <li>
-                        <a href="#">All movies</a>
+                        <a onclick="all_movies();">All movies</a>
                     </li>
                     <li>
-                        <a href="#">Movies & genre</a>
+                        <a onclick="movie_genre();">Movies & genre</a>
                     </li>
                     <li>
-                        <a href="#">Movie & people</a>
+                        <a onclick="movie_people_playin();">Actors</a>
+                    </li>
+                    <li>
+                        <a onclick="movie_people_workin();">Movie makers</a>
                     </li>
                 </ul>
             </li>
@@ -43,10 +46,10 @@
                 <a href="#peopleSubmenu" data-toggle="collapse" aria-expanded="false" class="dropdown-toggle">People</a>
                 <ul class="collapse list-unstyled" id="peopleSubmenu">
                     <li>
-                        <a href="#">All peoples</a>
+                        <a onclick="all_people();">All peoples</a>
                     </li>
                     <li>
-                        <a href="#">Knowledge between people</a>
+                        <a onclick="knowledge_people();">Knowledge between people</a>
                     </li>
                     <li>
                         <a href="#">People known for</a>
@@ -101,6 +104,8 @@
                 </button>
 
                 <div class="collapse navbar-collapse" id="navbarSupportedContent">
+                    <input type="text" id="searchBar" style="margin-left: 70px; width: 1000px;" placeholder="Enter your query">
+                    <button class="btn btn-primary btn-sm" onclick="execQuery();" style="margin-left: 10px;">Execute</button>
                     <ul class="nav navbar-nav ml-auto">
                         <li class="nav-item active">
                             <a class="nav-link" href="#">Page</a>

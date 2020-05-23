@@ -60,6 +60,61 @@ function draw() {
     viz.render();
 }
 
+function updateSearchBar(query) {
+    document.getElementById("searchBar").value = query;
+}
+
+function execQuery() {
+    const q = document.getElementById("searchBar").value;
+    viz.renderWithCypher(q);
+}
+
+/*
+ * Neo4j request
+ */
+function all_movies() {
+    const q = "MATCH (n:Movie) RETURN n LIMIT 100";
+    updateSearchBar(q);
+    viz.renderWithCypher(q);
+}
+
+function movie_genre() {
+    const q = "MATCH p=()-[r:BELONGS_TO]->() RETURN p LIMIT 50";
+    updateSearchBar(q);
+    viz.renderWithCypher(q);
+}
+
+function movie_people_playin() {
+    const q = "MATCH p=()-[r:PLAY_IN]->() RETURN p LIMIT 50";
+    updateSearchBar(q);
+    viz.renderWithCypher(q);
+}
+
+function movie_people_workin() {
+    const q = "MATCH p=()-[r:WORK_IN]->() RETURN p LIMIT 50";
+    updateSearchBar(q);
+    viz.renderWithCypher(q);
+}
+
+function all_people() {
+    const q = "MATCH (p:People) RETURN p LIMIT 500";
+    updateSearchBar(q);
+    viz.renderWithCypher(q);
+}
+
+function knowledge_people() {
+    const q = "MATCH p=()-[r:KNOWS]->() RETURN p LIMIT 100";
+    updateSearchBar(q);
+    viz.renderWithCypher(q);
+}
+
+
+
+
+
+/*
+ * User to side navbar
+ */
 $(document).ready(function () {
     $('#sidebarCollapse').on('click', function () {
         $('#sidebar').toggleClass('active');
