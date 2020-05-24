@@ -15,6 +15,9 @@ Les buts de ce projet sont de déterminer les scores de films selon leur ratio r
 Ce projet se déroule dans le cadre du cours de Web Mining du master MSE HES-SO. L'objectif principal du projet est de visualiser, sous forme graphe, les relations entre les films, leurs genres et les peoples. Nous appliquons des algorithmes choisis pour déterminer les noeuds du graphe les plus importants, trouver les plus courts chemins entre peoples et former des communautés de films, peoples ou genres.
 
 # Données
+
+## TMDb
+
 Nous utilisons les données provenant de [The Movie Database (TMDb)](https://www.themoviedb.org/) à l'aide de son [API](https://developers.themoviedb.org/3/getting-started). À partir des données d'un film, nous avons tous les éléments nécessaires pour déterminer son score et ses relations aux peoples et genres associés. Ci-dessous un exemple de données retournées par l'API pour le film *Pirates of the Caribbean: The Curse of the Black Pearl* :
 
 ```json
@@ -122,6 +125,43 @@ La première étape est d'obtenir tous les films disponibles sur TMDb. Pour cela
 
 Nous devons donc parcourir ce fichier, comportant plus de 500'000 films et récupérer les informations au format JSON.
 
+## Base de données orientée graphe
+
+Après avoir récupéré et épuré les données brutes de TMDb, nous les stockons dans une base de données orientée graphe. La structure de graphe est particulièrement intéressante pour décrire les relations entre différentes entités, pour trouver des communautés autour de certains noeuds et pour avoir un joli rendu visuel. L'image suivante décrit ces noeuds et relations :
+
+![Relations entre noeuds du graphe](report/relations.svg)
+
+### Noeuds
+
+Nous avons 3 types de noeuds (dont 2 sous-types) :
+
+- `Movie` : représente un film, avec les attributs suivants :
+    - `id` : identifiant provenant de TMDb
+    - `title`
+    - `budget`
+    - `revenue`
+    - `score` : rapport `revenue / budget`
+- `Genre` : représente un genre de films, comme Action, Comédie, etc. avec les attributs suivants :
+    - `id` : identifiant provenant de TMDb
+    - `name`
+- `People` : peut également avoir l'étiquette `Actor` et `MovieMaker`, il représente les acteurs et/ou personnes ayant participé au film et a les attributs suivants :
+    - `id` : identifiant provenant de TMDb
+    - `name`
+    - `gender`
+    - `score` : redistribution d'une fraction des scores des films dans lequel ce `People` apparait divisé par ce même nombre de films
+
+### Relations
+
+Nous avons 8 types de relations :
+
+- `BELONGS_TO` : indique l'appartenance d'un `Movie` à un `Genre`
+- `PLAY_IN` : relie un `People/Actor` à un `Movie` avec comme attribut `character` indiquant le personnage interprété dans ce film
+- `WORK_IN` : relie un `People/MovieMaker` à un `Movie` avec comme attribut `job` indiquant quel poste il a dans ce film
+- `KNOWN_FOR_ACTING` : indique l'appartenance d'un `People/Actor` à un `Genre` avec un attribut `count` dénombrant le nombre de fois où ce `People` apparait dans un film de ce `Genre`
+- `KNOWN_FOR_WORKING` : indique l'appartenance d'un `People/MovieMaker` à un `Genre` avec un attribut `count` dénombrant le nombre de fois où ce `People` apparait dans un film de ce `Genre`
+- `KNOWS` : indique si deux `People` se connaissent (*id est* se sont croisés dans un même film) avec un attribut `count` dénombrant le nombre de fois où ces deux `People` se sont croisés
+- `SIMILAR` : relie chaque `Movie` à la liste de ses films semblables selon les critères TMDb
+- `RECOMMENDATIONS` : relie chaque `Movie` à la liste de ses films recommandés selon les utilisateurs de TMDb
 
 
 # Architecture
@@ -131,7 +171,7 @@ Nous devons donc parcourir ce fichier, comportant plus de 500'000 films et récu
 Tout d'abord, un programme est dédié à la récupération de données proprement dites, à partir de l'API fournissant les données en JSON, enregistrant les données pour les films ayant les champs revenu et budget valides. Ensuite, ces données seront manipulées et insérées dans la base de donnée choisie de manière cohérente et selon les besoins de l'interface. Finalement, une interface graphique sera implémentée pour visualiser les graphes obtenus et exécuter des requêtes à la base de données.
 
 ## Uses cases
-Voici la liste des principaux *uses cases* du système : 
+Voici la liste des principaux *uses cases* du système :
 
 - Visualiser l'interconnexion (via un graphe) entre les différentes entités représentées dans la base de données (films, acteurs, genres)
 - Modifier l'affichage de ce graphe en spécifiant certains critères de recherche
@@ -179,8 +219,8 @@ Voici la liste des différentes fonctionnalités que nous allons réaliser dans 
     - Calcul d'un score pour les différents films
     - Insertion des données dans une base de données orientée graphe
 
-- Frontend : 
-  
+- Frontend :
+
     - Visualisation des données sous forme d'interface graphique représentant un graphe
     - Regroupement des données en fonction de certains critères (genre, film etc.)
     - Regroupement des acteurs en fonction des genres des films dans lesquels ils ont joué
@@ -245,6 +285,37 @@ NEXTCLOUD_UPLOAD=https://your.nextcloud.com/qwertz ; Le répertoire Nextcloud
 ```
 
 Un `makefile` est disponible dans `collector` pour exécuter chaque étape de la récupération.
+
+
+## Parsing et insertion dans Neo4j
+
+Nous avons réalisé un programme lisant les données brutes en JSON provenant de la collecte de TMDb et qui les insèrent selon nos besoins dans Neo4j. Nous avons choisi Scala comme langage, en raison de ses performances, de la justesse du langage et aussi pour bénéficier de la librairie [spray-json](https://github.com/spray/spray-json) pour la désérialisation du JSON et de [neotypes](https://neotypes.github.io/neotypes/), le driver Neo4j Scala basé sur le driver officiel Java. Le programme est constitué de trois grandes étapes :
+
+1. Parcours des films désérialisés : ajout de chaque film ainsi que création/mise à jour des genres et des *peoples* associés avec leurs relations respectives. Comme il peut y avoir de nombreux *peoples* associés à un film, nous prenons au plus les 30 premiers acteurs d'un film, classés par TMDb selon leur ordre d'importance dans le film et nous sélectionnons les *movie makers* selon une liste arbitraire des jobs les plus représentatifs. C'est également dans cette boucle principale que le score des *peoples* commence à être calculé (somme des fractions des scores des films).
+1. Après avoir inséré tous les films, un deuxième parcours des films est effectué pour leur ajouter leurs films similaires et recommendés respectifs, selon si ces derniers sont également déjà présents dans Neo4j.
+1. Une fois tous les *peoples* insérés, nous divisons le score temporaire par le nombre de films dans lequel ils ont joué.
+
+Les insertions de noeuds et des relations se font avec le langage de requêtes de Neo4j, [Cypher](https://neo4j.com/developer/cypher-query-language/). À titre d'exemple, ci-dessous se trouve notre méthode Scala pour l'insertion des genres associés à un film :
+
+```scala
+def addGenres(genre: Genre, m: Movie): Future[Unit] = driver.readSession { session =>
+  val f = c"""MERGE (genre: Genre {
+    id: ${genre.id},
+    name: ${genre.name}})""".query[Unit].execute(session)
+
+  Await.result(f, Duration.Inf)
+
+  c"""MATCH (m: Movie {id: ${m.id}})
+      MATCH (g: Genre {id: ${genre.id}})
+      MERGE (m)-[r:BELONGS_TO]->(g)
+   """.query[Unit].execute(session)
+}
+```
+
+
+## Frontend
+<!-- TODO: -->
+
 
 # Résultats attendus
 Nous nous attendons à pouvoir comparer les scores des films entre eux, trouver des communautés d'acteurs/films/genres, ou de voir les genres de films les plus populaires.

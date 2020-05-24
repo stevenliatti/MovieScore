@@ -44,6 +44,8 @@ object Main {
 
     val movies = movieService.readMoviesFromFile("data/movies.json").toList
 
+    // First step : foreach movie, add it, with associated genres and peoples
+    // and foreach people, link it to other peoples and genres
     movies.foreach(m => {
       val f = movieService.addMovie(m)
       Await.result(f, Duration.Inf)
@@ -74,6 +76,7 @@ object Main {
       } yield if(p1.id != p2.id) movieService.addKnowsRelation(p1, p2)
     })
 
+    // Second step : add similar and recommended movies
     // Add similar movies for each movie
     val similar = for {
       m1 <- movies
@@ -87,7 +90,7 @@ object Main {
     } yield movieService.addRecommendationsRelation(m1, m2)
 
     // TODO: improve allPeople creation
-    // Compute final people score
+    // Last step : compute final people score
     val allPeople = movies.flatMap(
       m => m.credits.cast.filter(a => a.order < actorsByMovie) :::
         m.credits.crew.filter(c => jobsForMovie.contains(c.job))
