@@ -83,8 +83,23 @@ function execQuery() {
     viz.renderWithCypher(q);
 }
 
-function onSearch() {
+function onSearchQuery() {
     document.getElementById("searchBar").focus();
+}
+
+function onSearchMovie() {
+    const title = document.getElementById("searchMovie").value;
+    var q = `MATCH (m:Movie {title: "${title}"}) RETURN m`;
+    if (document.getElementById("rdGenre").checked) {
+        q = `MATCH p=(m: Movie{title: "${title}"})-[r:BELONGS_TO]->() RETURN p`
+    } else if(document.getElementById("rdPeople").checked) {
+        q = `MATCH p=(m: Movie{title: "${title}"})<-[:PLAY_IN|:WORK_IN]-() RETURN p`
+    }
+    if(document.getElementById("rdGenre").checked && document.getElementById("rdPeople").checked) {
+        q = `MATCH p=(m: Movie{title: "${title}"})-[:PLAY_IN|:WORK_IN|:BELONGS_TO]-() RETURN p`
+    }
+    updateSearchBar(q);
+    viz.renderWithCypher(q);
 }
 
 function initialQuery() {
@@ -186,7 +201,7 @@ $(document).ready(function () {
 /*
  * Gestion of autocompletion
  */
-$('.basicAutoSelect').autoComplete({
+$('.basicAutoSelectPeople').autoComplete({
     resolver: 'custom',
     events: {
         search: function (query, callback) {
@@ -197,6 +212,21 @@ $('.basicAutoSelect').autoComplete({
                     const records = Array.from(res.records);
                     const names = records.map(r => r._fields[0]).sort((a, b) => a.toLowerCase().localeCompare(b.toLowerCase()));
                     console.log(names);
+                    callback(names);
+                });
+        }
+    }
+});
+
+$('.basicAutoSelectMovie').autoComplete({
+    resolver: 'custom',
+    events: {
+        search: function (query, callback) {
+            session
+                .run(`MATCH (m:Movie) WHERE LOWER(m.title) STARTS WITH LOWER("${query}") RETURN m.title`)
+                .then(res => {
+                    const records = Array.from(res.records);
+                    const names = records.map(r => r._fields[0]).sort((a, b) => a.toLowerCase().localeCompare(b.toLowerCase()));
                     callback(names);
                 });
         }

@@ -40,6 +40,23 @@
                     <li>
                         <a onclick="movie_people_workin();">Movie makers</a>
                     </li>
+                    <li>
+                        <select class="form-control basicAutoSelectMovie mt-2" id="searchMovie" name="simple_select"
+                                placeholder="Search movie" autocomplete="off"></select>
+                        <p>Included relations :</p>
+                        <div class="text-center mt-2">
+                            <label class="ml-2">
+                                <input type="checkbox" name="rbGenre" id="rdGenre">   Genre
+                                <span class="checkmark"></span>
+                            </label>
+                            <br/>
+                            <label class="ml-2">
+                                <input type="checkbox" name="rbPeople" id="rdPeople">   People
+                                <span class="checkmark"></span>
+                            </label>
+                            <button class="btn btn-success mt-2" onclick="onSearchMovie();">Show movie</button>
+                        </div>
+                    </li>
                 </ul>
             </li>
             <li>
@@ -77,12 +94,12 @@
                 <a href="#pageShortestPathSubmenu" data-toggle="collapse" aria-expanded="false" class="dropdown-toggle">Shortest path</a>
                 <ul class="collapse list-unstyled" id="pageShortestPathSubmenu">
                     <li class="mt-1">
-                        <select class="form-control basicAutoSelect" id="SPP1" name="simple_select"
-                                placeholder="type to search..." autocomplete="off"></select>
+                        <select class="form-control basicAutoSelectPeople" id="SPP1" name="simple_select"
+                                placeholder="People 1" autocomplete="off"></select>
                     </li>
                     <li class="mt-1">
-                        <select class="form-control basicAutoSelect" id="SPP2" name="simple_select"
-                                placeholder="type to search..." autocomplete="off"></select>
+                        <select class="form-control basicAutoSelectPeople" id="SPP2" name="simple_select"
+                                placeholder="People 2" autocomplete="off"></select>
                     </li>
                     <li class="text-center mt-2">
                         <button class="btn btn-success btn-sm mt-1" onclick="shortest_path();">Compute shortest path</button>
@@ -93,7 +110,7 @@
 
         <ul class="list-unstyled CTAs">
             <li>
-                <a onclick="onSearch();" class="download">Write your request</a>
+                <a onclick="onSearchQuery();" class="download">Write your request</a>
             </li>
             <li>
                 <a onclick="initialQuery();" class="article">Go to initial request</a>
