@@ -54,6 +54,14 @@
                                 <input type="checkbox" name="rbPeople" id="rdPeople">   People
                                 <span class="checkmark"></span>
                             </label>
+                            <label class="ml-2">
+                                <input type="checkbox" name="rbRecommendation" id="rdRecommendations">   Recommendations
+                                <span class="checkmark"></span>
+                            </label>
+                            <label class="ml-2">
+                                <input type="checkbox" name="rbSimilar" id="rbSimilar">   Similar
+                                <span class="checkmark"></span>
+                            </label>
                             <button class="btn btn-success mt-2" onclick="onSearchMovie();">Show movie</button>
                         </div>
                     </li>
@@ -71,6 +79,23 @@
                     <li>
                         <a onclick="people_knownFor();">People known for</a>
                     </li>
+                    <li>
+                        <select class="form-control basicAutoSelectPeople mt-2" id="searchPeople" name="simple_select"
+                                placeholder="Search people" autocomplete="off"></select>
+                        <p>Included relations :</p>
+                        <div class="text-center mt-2">
+                            <label class="ml-2">
+                                <input type="checkbox" name="rbGenre" id="rdMovies">   Known for genre
+                                <span class="checkmark"></span>
+                            </label>
+                            <br/>
+                            <label class="ml-2">
+                                <input type="checkbox" name="rbPeople" id="rdPeopleKnown">   Relationships
+                                <span class="checkmark"></span>
+                            </label>
+                            <button class="btn btn-success mt-2" onclick="onSearchPeople();">Show people</button>
+                        </div>
+                    </li>
                 </ul>
             </li>
             <li>
@@ -80,10 +105,21 @@
                         <a onclick="all_genres();">All genres</a>
                     </li>
                     <li>
-                        <a onclick="genres_movies();">Genres & movies</a>
-                    </li>
-                    <li>
-                        <a onclick="genres_peoples();">Genres & peoples</a>
+                        <select class="form-control basicAutoSelectGenre mt-2" id="searchGenre" name="simple_select"
+                                placeholder="Search genre" autocomplete="off"></select>
+                        <p>Included relations :</p>
+                        <div class="text-center mt-2">
+                            <label class="ml-2">
+                                <input type="checkbox" name="rbGenre" id="rdMoviesAssociated">   Movies
+                                <span class="checkmark"></span>
+                            </label>
+                            <br/>
+                            <label class="ml-2">
+                                <input type="checkbox" name="rbPeople" id="rdPeopleAssociated">   People associated
+                                <span class="checkmark"></span>
+                            </label>
+                            <button class="btn btn-success mt-2" onclick="onSearchGenre();">Show genre</button>
+                        </div>
                     </li>
                 </ul>
             </li>

@@ -3,7 +3,7 @@ var viz;
 const URL_DB = "bolt://localhost:7687";
 const USER = "neo4j";
 const PWD = "wem2020";
-const INITIAL_QUERY = "MATCH p=()-[r:BELONGS_TO]->() RETURN p LIMIT 50";
+const INITIAL_QUERY = "MATCH p=(:Genre)<-[:BELONGS_TO|:KNOWN_FOR_ACTING|:KNOWN_FOR_WORKING]-() RETURN p LIMIT 50";
 
 const driver = neo4j.v1.driver(
     'bolt://localhost',
@@ -89,15 +89,52 @@ function onSearchQuery() {
 
 function onSearchMovie() {
     const title = document.getElementById("searchMovie").value;
-    var q = `MATCH (m:Movie {title: "${title}"}) RETURN m`;
-    if (document.getElementById("rdGenre").checked) {
-        q = `MATCH p=(m: Movie{title: "${title}"})-[r:BELONGS_TO]->() RETURN p`
-    } else if(document.getElementById("rdPeople").checked) {
-        q = `MATCH p=(m: Movie{title: "${title}"})<-[:PLAY_IN|:WORK_IN]-() RETURN p`
-    }
-    if(document.getElementById("rdGenre").checked && document.getElementById("rdPeople").checked) {
-        q = `MATCH p=(m: Movie{title: "${title}"})-[:PLAY_IN|:WORK_IN|:BELONGS_TO]-() RETURN p`
-    }
+    var relations = '';
+    if (document.getElementById("rdGenre").checked)
+        relations += ':BELONGS_TO|';
+    if(document.getElementById("rdPeople").checked)
+        relations += ':PLAY_IN|:WORK_IN|';
+    if(document.getElementById("rdRecommendations").checked)
+        relations += ':RECOMMENDATIONS|';
+    if(document.getElementById("rbSimilar").checked)
+        relations += ':SIMILAR|';
+    relations = relations.slice(0, -1);
+    if(relations !== '')
+        var q = `MATCH p=(m: Movie{title: "${title}"})-[${relations}]-() RETURN p`;
+    else
+        var q = `MATCH (m:Movie {title: "${title}"}) RETURN m`;
+    updateSearchBar(q);
+    viz.renderWithCypher(q);
+}
+
+function onSearchPeople() {
+    const name = document.getElementById("searchPeople").value;
+    var relations = '';
+    if (document.getElementById("rdMovies").checked)
+        relations += ":KNOWN_FOR_ACTING|:KNOWN_FOR_WORKING|";
+    if(document.getElementById("rdPeopleKnown").checked)
+        relations += ":KNOWS|";
+    relations = relations.slice(0, -1);
+    if(relations !== '')
+        var q = `MATCH res=(p: People {name: "${name}"})-[${relations}]-() RETURN res`;
+    else
+        var q = `MATCH (n:People {name: "${name}"}) RETURN n`;
+    updateSearchBar(q);
+    viz.renderWithCypher(q);
+}
+
+function onSearchGenre() {
+    const name = document.getElementById("searchGenre").value;
+    var relations = '';
+    if (document.getElementById("rdMoviesAssociated").checked)
+        relations += `:BELONGS_TO|`;
+    if(document.getElementById("rdPeopleAssociated").checked)
+        relations += `:KNOWN_FOR_ACTING|:KNOWN_FOR_WORKING|`;
+    relations = relations.slice(0, -1);
+    if(relations !== '')
+        var q = `MATCH g=(:Genre {name: "${name}"})<-[${relations}]-() RETURN g LIMIT 30`;
+    else
+        var q = `MATCH (n:Genre {name: "${name}"}) RETURN n`;
     updateSearchBar(q);
     viz.renderWithCypher(q);
 }
@@ -224,6 +261,21 @@ $('.basicAutoSelectMovie').autoComplete({
         search: function (query, callback) {
             session
                 .run(`MATCH (m:Movie) WHERE LOWER(m.title) STARTS WITH LOWER("${query}") RETURN m.title`)
+                .then(res => {
+                    const records = Array.from(res.records);
+                    const names = records.map(r => r._fields[0]).sort((a, b) => a.toLowerCase().localeCompare(b.toLowerCase()));
+                    callback(names);
+                });
+        }
+    }
+});
+
+$('.basicAutoSelectGenre').autoComplete({
+    resolver: 'custom',
+    events: {
+        search: function (query, callback) {
+            session
+                .run(`MATCH (g:Genre) WHERE LOWER(g.name) STARTS WITH LOWER("${query}") RETURN g.name`)
                 .then(res => {
                     const records = Array.from(res.records);
                     const names = records.map(r => r._fields[0]).sort((a, b) => a.toLowerCase().localeCompare(b.toLowerCase()));
