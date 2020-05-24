@@ -74,7 +74,20 @@
                 <a onclick="page_rank();">Page Rank</a>
             </li>
             <li>
-                <a onclick="shortest_path();">Shortest path</a>
+                <a href="#pageShortestPathSubmenu" data-toggle="collapse" aria-expanded="false" class="dropdown-toggle">Shortest path</a>
+                <ul class="collapse list-unstyled" id="pageShortestPathSubmenu">
+                    <li class="mt-1">
+                        <select class="form-control basicAutoSelect" id="SPP1" name="simple_select"
+                                placeholder="type to search..." autocomplete="off"></select>
+                    </li>
+                    <li class="mt-1">
+                        <select class="form-control basicAutoSelect" id="SPP2" name="simple_select"
+                                placeholder="type to search..." autocomplete="off"></select>
+                    </li>
+                    <li class="text-center mt-2">
+                        <button class="btn btn-success btn-sm mt-1" onclick="shortest_path();">Compute shortest path</button>
+                    </li>
+                </ul>
             </li>
         </ul>
 
@@ -137,6 +150,12 @@
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.1.0/js/bootstrap.min.js" integrity="sha384-uefMccjFJAIv6A+rW+L4AHf99KvxDjWSu1z9VI8SKNVmz4sk7buKt/6v9KI65qnm" crossorigin="anonymous"></script>
     <!-- Neo4j CDN -->
     <script src="https://cdn.neo4jlabs.com/neovis.js/v1.4.0/neovis.js"></script>
+    <!-- Bootstrap autocomplete CDN -->
+    <script src="https://cdn.jsdelivr.net/gh/xcash/bootstrap-autocomplete@v2.3.5/dist/latest/bootstrap-autocomplete.min.js"></script>
+    <!-- Neo4j driver -->
+    <script src="https://unpkg.com/neo4j-driver@1.7.5/lib/browser/neo4j-web.min.js"></script>
+    <script src="js2neo.min.js"></script>
+    <!-- Script src -->
     <script src="ui.js"></script>
 </body>
 </html>

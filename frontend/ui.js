@@ -5,6 +5,13 @@ const USER = "neo4j";
 const PWD = "wem2020";
 const INITIAL_QUERY = "MATCH p=()-[r:BELONGS_TO]->() RETURN p LIMIT 50";
 
+const driver = neo4j.v1.driver(
+    'bolt://localhost',
+    neo4j.v1.auth.basic(USER, PWD)
+)
+
+const session = driver.session()
+
 function draw() {
     var config = {
         container_id: "viz",
@@ -158,7 +165,9 @@ function page_rank() {
 }
 
 function shortest_path() {
-    const q = "MATCH (p1:People { id: 18262}),(p2:People { id: 104503 }), p = shortestPath((p1)-[r:KNOWS *]-(p2)) RETURN p";
+    const p1 = document.getElementById("SPP1").value;
+    const p2 = document.getElementById("SPP2").value;
+    const q = `MATCH (p1:People { name: '${p1}'}),(p2:People {name: '${p2}' }), p = shortestPath((p1)-[r:KNOWS *]-(p2)) RETURN p`;
     updateSearchBar(q);
     viz.renderWithCypher(q);
 }
@@ -172,4 +181,24 @@ $(document).ready(function () {
         $('#sidebar').toggleClass('active');
         $(this).toggleClass('active');
     });
+});
+
+/*
+ * Gestion of autocompletion
+ */
+$('.basicAutoSelect').autoComplete({
+    resolver: 'custom',
+    events: {
+        search: function (query, callback) {
+            session
+                .run(`MATCH (p:People) WHERE LOWER(p.name) STARTS WITH LOWER("${query}") RETURN p.name`)
+                .then(res => {
+                    console.log(res);
+                    const records = Array.from(res.records);
+                    const names = records.map(r => r._fields[0]).sort((a, b) => a.toLowerCase().localeCompare(b.toLowerCase()));
+                    console.log(names);
+                    callback(names);
+                });
+        }
+    }
 });
