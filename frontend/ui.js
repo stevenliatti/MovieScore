@@ -25,7 +25,7 @@ function draw() {
             },
             "People": {
                 "caption": "name",
-                "community": "Black"
+                "size": "score"
             },
             "Actor": {
                 "caption": "name"
