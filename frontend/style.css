@@ -154,6 +154,11 @@ a.article, a.article:hover {
     color: #fff !important;
 }
 
+.searchInput {
+    width: 220px;
+    margin: auto;
+}
+
 /* ---------------------------------------------------
     CONTENT STYLE
 ----------------------------------------------------- */
