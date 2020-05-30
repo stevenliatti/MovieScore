@@ -114,11 +114,22 @@ object Main {
 /*
 Pour choper les relations d'un movie: MATCH p=()-[]->(m: Movie {id: 22})-[b: BELONGS_TO]->() RETURN p, b LIMIT 20
 Relation entre 2 people : MATCH (p2: People {name: 'William Lustig'})<-[r:KNOWS]-(p1: People {name: 'John Landis'}) RETURN p1, p2
-TODO : map entre people et liste de job/personnages pour avoir PLAY_IN / WORK_IN comme tableau
+TODO: map entre people et liste de job/personnages pour avoir PLAY_IN / WORK_IN comme tableau
 TODO: améliorer division du score des movie makers
-TODO : Voir pour le pb concurence
 
 
+-----------------------------------------------------------------
+// CONTRAINTES
+TODO: créer contraintes (+ index gratuit) comme ceci
+CREATE CONSTRAINT ON (m:Movie) ASSERT m.id IS UNIQUE;
+CREATE CONSTRAINT ON (g:Genre) ASSERT g.id IS UNIQUE;
+CREATE CONSTRAINT ON (p:People) ASSERT p.id IS UNIQUE;
+
+// créer index
+CREATE INDEX ON :Movie(title)
+
+-----------------------------------------------------------------
+PAGERANK
 // créer graphe pour exécuter les algos
 
 // movies similar pagerank en mode "debug"
@@ -129,7 +140,7 @@ CALL gds.graph.create.cypher(
 )
 YIELD graphName, nodeCount, relationshipCount, createMillis;
 
-// movies similar pagerank en mode "debug"
+// movies similar pagerank en mode prod
 CALL gds.graph.create(
     'pagerank-movie-similar',
     'Movie',
@@ -144,10 +155,31 @@ CALL gds.pageRank.write('pagerank-movie-similar', {
 })
 YIELD nodePropertiesWritten AS writtenProperties, ranIterations
 
+
+// movies recommendations pagerank en mode prod
+CALL gds.graph.create(
+    'pagerank-movie-recommendations',
+    'Movie',
+    'RECOMMENDATIONS'
+)
+
+// execute pagerank on recommendations movies
+CALL gds.pageRank.write('pagerank-movie-recommendations', {
+  maxIterations: 20,
+  dampingFactor: 0.85,
+  writeProperty: 'pagerankRecommendations'
+})
+YIELD nodePropertiesWritten AS writtenProperties, ranIterations
+
+
 // show movies by pageRank recommendations
 MATCH (m:Movie) 
 RETURN DISTINCT m.title, m.pagerankRecommendations, m.pagerankSimilar
 ORDER BY m.pagerankRecommendations DESC LIMIT 50
+
+
+-----------------------------------------------------------------
+CENTRALITY
 
 // calcul le Degree Centrality pour les People avec KNOWS
 CALL gds.alpha.degree.write({
@@ -160,5 +192,73 @@ CALL gds.alpha.degree.write({
   },
   writeProperty: 'knowsDegree'
 })
+
+-----------------------------------------------------------------
+GENRE DEGREE
+
+// ajout de propriétés de taille aux Genre
+MATCH (g:Genre) SET g.belongsToDegree = size( (g)<-[:BELONGS_TO]-() )
+MATCH (g:Genre) SET g.knownForActingDegree = size( (g)<-[:KNOWN_FOR_ACTING]-() )
+MATCH (g:Genre) SET g.knownForWorkingDegree = size( (g)<-[:KNOWN_FOR_WORKING]-() )
+MATCH (g:Genre) SET g.knownForDegree = size( (g)<-[:KNOWN_FOR_WORKING|:KNOWN_FOR_ACTING]-() )
+MATCH (g:Genre) SET g.degree = size( (g)<-[:BELONGS_TO|:KNOWN_FOR_WORKING|:KNOWN_FOR_ACTING]-() )
+
+
+-----------------------------------------------------------------
+COMMUNITY
+
+CALL gds.graph.create(
+    'people-knows-community-louvain-graph',
+    'People',
+    {
+        KNOWS: {
+            orientation: 'UNDIRECTED'
+        }
+    },
+    {
+        relationshipProperties: 'count'
+    }
+)
+
+CALL gds.louvain.write('people-knows-community-louvain-graph', { writeProperty: 'knowsCommunity' })
+YIELD communityCount, modularity, modularities
+
+
+-----------------------------------------------------------------
+SIMILARITY MOVIES
+
+// create
+CALL gds.graph.create('movie-belongs-to-node-similar', ['Movie', 'Genre'], 'BELONGS_TO');
+
+// execute
+CALL gds.nodeSimilarity.write('movie-belongs-to-node-similar', {
+    writeRelationshipType: 'SIMILAR_JACCARD',
+    writeProperty: 'score'
+})
+YIELD nodesCompared, relationshipsWritten
+
+-----------------------------------------------------------------
+SIMILARITY PEOPLES
+
+// create
+CALL gds.graph.create('people-known-for-acting-node-similar', ['People', 'Genre'], 'KNOWN_FOR_ACTING');
+
+// execute
+CALL gds.nodeSimilarity.write('people-known-for-acting-node-similar', {
+    writeRelationshipType: 'SIMILAR_FOR_ACTING',
+    writeProperty: 'score'
+})
+YIELD nodesCompared, relationshipsWritten
+
+
+// create
+CALL gds.graph.create('people-known-for-working-node-similar', ['People', 'Genre'], 'KNOWN_FOR_WORKING');
+
+// execute
+CALL gds.nodeSimilarity.write('people-known-for-working-node-similar', {
+    writeRelationshipType: 'SIMILAR_FOR_WORKING',
+    writeProperty: 'score'
+})
+YIELD nodesCompared, relationshipsWritten
 
  */
