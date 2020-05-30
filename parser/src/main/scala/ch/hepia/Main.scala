@@ -117,4 +117,48 @@ Relation entre 2 people : MATCH (p2: People {name: 'William Lustig'})<-[r:KNOWS]
 TODO : map entre people et liste de job/personnages pour avoir PLAY_IN / WORK_IN comme tableau
 TODO: améliorer division du score des movie makers
 TODO : Voir pour le pb concurence
+
+
+// créer graphe pour exécuter les algos
+
+// movies similar pagerank en mode "debug"
+CALL gds.graph.create.cypher(
+    'pagerank-movie-similar',
+    'MATCH (m:Movie) RETURN id(m) AS id',
+    'MATCH (a:Movie)-[:SIMILAR]->(b:Movie) RETURN id(a) AS source, id(b) AS target'
+)
+YIELD graphName, nodeCount, relationshipCount, createMillis;
+
+// movies similar pagerank en mode "debug"
+CALL gds.graph.create(
+    'pagerank-movie-similar',
+    'Movie',
+    'SIMILAR'
+)
+
+// execute pagerank on similar movies
+CALL gds.pageRank.write('pagerank-movie-similar', {
+  maxIterations: 20,
+  dampingFactor: 0.85,
+  writeProperty: 'pagerankSimilar'
+})
+YIELD nodePropertiesWritten AS writtenProperties, ranIterations
+
+// show movies by pageRank recommendations
+MATCH (m:Movie) 
+RETURN DISTINCT m.title, m.pagerankRecommendations, m.pagerankSimilar
+ORDER BY m.pagerankRecommendations DESC LIMIT 50
+
+// calcul le Degree Centrality pour les People avec KNOWS
+CALL gds.alpha.degree.write({
+  nodeProjection: 'People',
+  relationshipProjection: {
+    KNOWS: {
+      type: 'KNOWS',
+      projection: 'REVERSE'
+    }
+  },
+  writeProperty: 'knowsDegree'
+})
+
  */
