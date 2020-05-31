@@ -1,13 +1,13 @@
 var viz;
 
-const URL_DB = "bolt://129.194.184.108:7687";
+const URL_DB = "bolt://129.194.184.111:7687";
 const USER = "neo4j";
 const PWD = "wem2020";
-var INITIAL_QUERY = "MATCH p=(:Genre)<-[:BELONGS_TO|:KNOWN_FOR_ACTING|:KNOWN_FOR_WORKING]-() RETURN p LIMIT 50";
+const INITIAL_QUERY = "MATCH r=()-[:SIMILAR]->(m:Movie)-->(g:Genre)<-[:KNOWN_FOR_ACTING|:KNOWN_FOR_WORKING]-(p:People)-[:KNOWS|:PLAY_IN|:WORK_IN]->() RETURN r LIMIT 50";
 const TMDB_URL = "https://www.themoviedb.org/"
 
 const driver = neo4j.v1.driver(
-    'bolt://129.194.184.108',
+    'bolt://129.194.184.111',
     neo4j.v1.auth.basic(USER, PWD)
 )
 
@@ -43,8 +43,7 @@ function defineConfig() {
             },
             "Genre": {
                 "caption": "name",
-                size: sizeGenre
-                // TODO : "size": "  | knownForWorkingDegree"
+                "size": sizeGenre
             }
         },
         relationships: {
@@ -74,8 +73,19 @@ function defineConfig() {
             },
             "SIMILAR": {
                 "caption": false
+            },
+            "SIMILAR_JACCARD": {
+                "caption": false,
+                "thickness": "score"
+            },
+            "SIMILAR_FOR_ACTING": {
+                "caption": false,
+                "thickness": "score"
+            },
+            "SIMILAR_FOR_WORKING": {
+                "caption": false,
+                "thickness": "score"
             }
-
         },
         initial_cypher: INITIAL_QUERY
     };
@@ -169,49 +179,49 @@ function initialQuery() {
  * Neo4j request
  */
 function all_movies() {
-    const q = "MATCH (n:Movie) RETURN n LIMIT 100";
+    const q = "MATCH (m:Movie) RETURN m ORDER BY m.score DESC LIMIT 100";
     updateSearchBar(q);
     viz.renderWithCypher(q);
 }
 
 function movie_genre() {
-    const q = "MATCH p=()-[r:BELONGS_TO]->() RETURN p LIMIT 50";
+    const q = "MATCH p=(m)-[r:BELONGS_TO]->() RETURN p ORDER BY m.score DESC LIMIT 50";
     updateSearchBar(q);
     viz.renderWithCypher(q);
 }
 
 function movie_people_playin() {
-    const q = "MATCH p=()-[r:PLAY_IN]->() RETURN p LIMIT 50";
+    const q = "MATCH r=(p)-[:PLAY_IN]->() RETURN r ORDER BY p.score DESC LIMIT 50";
     updateSearchBar(q);
     viz.renderWithCypher(q);
 }
 
 function movie_people_workin() {
-    const q = "MATCH p=()-[r:WORK_IN]->() RETURN p LIMIT 50";
+    const q = "MATCH r=(p)-[:WORK_IN]->() RETURN r ORDER BY p.score DESC LIMIT 50";
     updateSearchBar(q);
     viz.renderWithCypher(q);
 }
 
 function all_people() {
-    const q = "MATCH (p:People) RETURN p LIMIT 500";
+    const q = "MATCH (p:People) RETURN p ORDER BY p.score DESC LIMIT 500";
     updateSearchBar(q);
     viz.renderWithCypher(q);
 }
 
 function knowledge_people() {
-    const q = "MATCH p=()-[r:KNOWS]->() RETURN p LIMIT 100";
+    const q = "MATCH r=(p:People)-[:KNOWS]->() RETURN r ORDER BY p.knowDegree DESC LIMIT 100";
     updateSearchBar(q);
     viz.renderWithCypher(q);
 }
 
 function people_knownFor() {
-    const q = "MATCH r=(a: Actor)-->(g: Genre)<--(mm: MovieMaker) RETURN r LIMIT 200";
+    const q = "MATCH r=(a: Actor)-->(g: Genre)<--(mm: MovieMaker) RETURN r ORDER BY a.knowDegree DESC LIMIT 200";
     updateSearchBar(q);
     viz.renderWithCypher(q);
 }
 
 function all_genres() {
-    const q = "MATCH (n:Genre) RETURN n LIMIT 100";
+    const q = "MATCH (n:Genre) RETURN n ORDER BY n.degree DESC LIMIT 100";
     updateSearchBar(q);
     viz.renderWithCypher(q);
 }
@@ -323,7 +333,7 @@ $('.basicAutoSelectPeople').autoComplete({
     events: {
         search: function (query, callback) {
             session
-                .run(`MATCH (p:People) WHERE LOWER(p.name) STARTS WITH LOWER("${query}") RETURN p.name`)
+                .run(`MATCH (p:People) WHERE LOWER(p.name) CONTAINS LOWER("${query}") RETURN p.name`)
                 .then(res => {
                     console.log(res);
                     const records = Array.from(res.records);
@@ -340,7 +350,7 @@ $('.basicAutoSelectMovie').autoComplete({
     events: {
         search: function (query, callback) {
             session
-                .run(`MATCH (m:Movie) WHERE LOWER(m.title) STARTS WITH LOWER("${query}") RETURN m.title`)
+                .run(`MATCH (m:Movie) WHERE LOWER(m.title) CONTAINS LOWER("${query}") RETURN m.title`)
                 .then(res => {
                     const records = Array.from(res.records);
                     const names = records.map(r => r._fields[0]).sort((a, b) => a.toLowerCase().localeCompare(b.toLowerCase()));
@@ -355,7 +365,7 @@ $('.basicAutoSelectGenre').autoComplete({
     events: {
         search: function (query, callback) {
             session
-                .run(`MATCH (g:Genre) WHERE LOWER(g.name) STARTS WITH LOWER("${query}") RETURN g.name`)
+                .run(`MATCH (g:Genre) WHERE LOWER(g.name) CONTAINS LOWER("${query}") RETURN g.name`)
                 .then(res => {
                     const records = Array.from(res.records);
                     const names = records.map(r => r._fields[0]).sort((a, b) => a.toLowerCase().localeCompare(b.toLowerCase()));
