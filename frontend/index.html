@@ -14,184 +14,294 @@
     <script defer src="https://use.fontawesome.com/releases/v5.0.13/js/solid.js" integrity="sha384-tzzSw1/Vo+0N5UhStP3bvwWPq+uvzCMfrN1fEFe+xBmv1C/AtVX5K0uZtmcHitFZ" crossorigin="anonymous"></script>
     <script defer src="https://use.fontawesome.com/releases/v5.0.13/js/fontawesome.js" integrity="sha384-6OIrr52G08NpOFSZdxxz1xdNSndlD4vdcf/q2myIUVO0VsqaGHJsB0RaBE01VTOY" crossorigin="anonymous"></script>
 </head>
-<body onload="draw()">
+<body onload="draw(defineConfig())">
 
-<div class="wrapper">
-    <!-- Sidebar Holder -->
-    <nav id="sidebar">
-        <div class="sidebar-header">
-            <h3>Movie Score</h3>
-        </div>
+    <div class="wrapper">
+        <!-- Sidebar Holder -->
+        <nav id="sidebar">
+            <div class="sidebar-header">
+                <h3>Movie Score</h3>
+            </div>
 
-        <ul class="list-unstyled components">
-            <p>Menu</p>
-            <li class="active">
-                <a href="#movieSubmenu" data-toggle="collapse" aria-expanded="false" class="dropdown-toggle">Movie</a>
-                <ul class="collapse list-unstyled" id="movieSubmenu">
-                    <li>
-                        <a onclick="all_movies();">All movies</a>
-                    </li>
-                    <li>
-                        <a onclick="movie_genre();">Movies & genre</a>
-                    </li>
-                    <li>
-                        <a onclick="movie_people_playin();">Actors</a>
-                    </li>
-                    <li>
-                        <a onclick="movie_people_workin();">Movie makers</a>
-                    </li>
-                    <li>
-                        <select class="form-control basicAutoSelectMovie mt-2 searchInput" id="searchMovie" name="simple_select"
-                                placeholder="Search movie" autocomplete="off"></select>
-                        <p>Included relations :</p>
-                        <div class="text-center mt-2">
-                            <label class="ml-2">
-                                <input type="checkbox" name="rbGenre" id="rdGenre">   Genre
-                                <span class="checkmark"></span>
-                            </label>
-                            <br/>
-                            <label class="ml-2">
-                                <input type="checkbox" name="rbPeople" id="rdPeople">   People
-                                <span class="checkmark"></span>
-                            </label>
-                            <label class="ml-2">
-                                <input type="checkbox" name="rbRecommendation" id="rdRecommendations">   Recommendations
-                                <span class="checkmark"></span>
-                            </label>
-                            <label class="ml-2">
-                                <input type="checkbox" name="rbSimilar" id="rbSimilar">   Similar
-                                <span class="checkmark"></span>
-                            </label>
-                            <button class="btn btn-success mt-2" onclick="onSearchMovie();">Show movie</button>
-                        </div>
-                    </li>
-                </ul>
-            </li>
-            <li>
-                <a href="#peopleSubmenu" data-toggle="collapse" aria-expanded="false" class="dropdown-toggle">People</a>
-                <ul class="collapse list-unstyled" id="peopleSubmenu">
-                    <li>
-                        <a onclick="all_people();">All peoples</a>
-                    </li>
-                    <li>
-                        <a onclick="knowledge_people();">Knowledge between people</a>
-                    </li>
-                    <li>
-                        <a onclick="people_knownFor();">People known for</a>
-                    </li>
-                    <li>
-                        <select class="form-control basicAutoSelectPeople mt-2 searchInput" id="searchPeople" name="simple_select"
-                                placeholder="Search people" autocomplete="off"></select>
-                        <p>Included relations :</p>
-                        <div class="text-center mt-2">
-                            <label class="ml-2">
-                                <input type="checkbox" name="rbGenre" id="rdMovies">   Known for genre
-                                <span class="checkmark"></span>
-                            </label>
-                            <br/>
-                            <label class="ml-2">
-                                <input type="checkbox" name="rbPeople" id="rdPeopleKnown">   Relationships
-                                <span class="checkmark"></span>
-                            </label>
-                            <button class="btn btn-success mt-2" onclick="onSearchPeople();">Show people</button>
-                        </div>
-                    </li>
-                </ul>
-            </li>
-            <li>
-                <a href="#pageSubmenu" data-toggle="collapse" aria-expanded="false" class="dropdown-toggle">Genre</a>
-                <ul class="collapse list-unstyled" id="pageSubmenu">
-                    <li>
-                        <a onclick="all_genres();">All genres</a>
-                    </li>
-                    <li>
-                        <select class="form-control basicAutoSelectGenre mt-2 searchInput" id="searchGenre" name="simple_select"
-                                placeholder="Search genre" autocomplete="off"></select>
-                        <p>Included relations :</p>
-                        <div class="text-center mt-2">
-                            <label class="ml-2">
-                                <input type="checkbox" name="rbGenre" id="rdMoviesAssociated">   Movies
-                                <span class="checkmark"></span>
-                            </label>
-                            <br/>
-                            <label class="ml-2">
-                                <input type="checkbox" name="rbPeople" id="rdPeopleAssociated">   People associated
-                                <span class="checkmark"></span>
-                            </label>
-                            <button class="btn btn-success mt-2" onclick="onSearchGenre();">Show genre</button>
-                        </div>
-                    </li>
-                </ul>
-            </li>
-            <li>
-                <a onclick="page_rank();">Page Rank</a>
-            </li>
-            <li>
-                <a href="#pageShortestPathSubmenu" data-toggle="collapse" aria-expanded="false" class="dropdown-toggle">Shortest path</a>
-                <ul class="collapse list-unstyled" id="pageShortestPathSubmenu">
-                    <li class="mt-1">
-                        <select class="form-control basicAutoSelectPeople searchInput" id="SPP1" name="simple_select"
-                                placeholder="People 1" autocomplete="off"></select>
-                    </li>
-                    <li class="mt-1">
-                        <select class="form-control basicAutoSelectPeople searchInput" id="SPP2" name="simple_select"
-                                placeholder="People 2" autocomplete="off"></select>
-                    </li>
-                    <li class="text-center mt-2">
-                        <button class="btn btn-success btn-sm mt-1" onclick="shortest_path();">Compute shortest path</button>
-                    </li>
-                </ul>
-            </li>
-        </ul>
-
-        <ul class="list-unstyled CTAs">
-            <li>
-                <a onclick="onSearchQuery();" class="download">Write your request</a>
-            </li>
-            <li>
-                <a onclick="initialQuery();" class="article">Go to initial request</a>
-            </li>
-        </ul>
-    </nav>
-
-    <!-- Page Content Holder -->
-    <div id="content">
-
-        <nav class="navbar navbar-expand-lg navbar-light bg-light">
-            <div class="container-fluid">
-
-                <button type="button" id="sidebarCollapse" class="navbar-btn">
-                    <span></span>
-                    <span></span>
-                    <span></span>
-                </button>
-                <button class="btn btn-dark d-inline-block d-lg-none ml-auto" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
-                    <i class="fas fa-align-justify"></i>
-                </button>
-
-                <div class="collapse navbar-collapse" id="navbarSupportedContent">
-                    <input type="text" id="searchBar" style="margin-left: 70px; width: 1000px;" placeholder="Enter your query">
-                    <button class="btn btn-primary btn-sm" onclick="execQuery();" style="margin-left: 10px;">Execute</button>
-                    <ul class="nav navbar-nav ml-auto">
-                        <li class="nav-item active">
-                            <a class="nav-link" href="#">Page</a>
+            <ul class="list-unstyled components">
+                <p>Menu</p>
+                <li class="active">
+                    <a href="#movieSubmenu" data-toggle="collapse" aria-expanded="false" class="dropdown-toggle">Movie</a>
+                    <ul class="collapse list-unstyled" id="movieSubmenu">
+                        <li>
+                            <a onclick="all_movies();">All movies</a>
                         </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="#">Page</a>
+                        <li>
+                            <a onclick="movie_genre();">Movies & genre</a>
                         </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="#">Page</a>
+                        <li>
+                            <a onclick="movie_people_playin();">Actors</a>
                         </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="#">Page</a>
+                        <li>
+                            <a onclick="movie_people_workin();">Movie makers</a>
+                        </li>
+                        <li>
+                            <select class="form-control basicAutoSelectMovie mt-2 searchInput" id="searchMovie" name="simple_select"
+                                    placeholder="Search movie" autocomplete="off"></select>
+                            <p>Included relations :</p>
+                            <div class="text-center mt-2">
+                                <label class="ml-2">
+                                    <input type="checkbox" name="rbGenre" id="rdGenre">   Genre
+                                    <span class="checkmark"></span>
+                                </label>
+                                <br/>
+                                <label class="ml-2">
+                                    <input type="checkbox" name="rbPeople" id="rdPeople">   People
+                                    <span class="checkmark"></span>
+                                </label>
+                                <label class="ml-2">
+                                    <input type="checkbox" name="rbRecommendation" id="rdRecommendations">   Recommendations
+                                    <span class="checkmark"></span>
+                                </label>
+                                <label class="ml-2">
+                                    <input type="checkbox" name="rbSimilar" id="rbSimilar">   Similar
+                                    <span class="checkmark"></span>
+                                </label>
+                                <label class="ml-2">
+                                    <input type="checkbox" name="rbSimilarJaccard" id="rbSimilarJaccard">   Similar Jaccard
+                                    <span class="checkmark"></span>
+                                </label>
+                                <button class="btn btn-success mt-2" onclick="onSearchMovie();">Show movie</button>
+                            </div>
                         </li>
                     </ul>
+                </li>
+                <li>
+                    <a href="#peopleSubmenu" data-toggle="collapse" aria-expanded="false" class="dropdown-toggle">People</a>
+                    <ul class="collapse list-unstyled" id="peopleSubmenu">
+                        <li>
+                            <a onclick="all_people();">All peoples</a>
+                        </li>
+                        <li>
+                            <a onclick="knowledge_people();">Knowledge between people</a>
+                        </li>
+                        <li>
+                            <a onclick="people_knownFor();">People known for</a>
+                        </li>
+                        <li>
+                            <select class="form-control basicAutoSelectPeople mt-2 searchInput" id="searchPeople" name="simple_select"
+                                    placeholder="Search people" autocomplete="off"></select>
+                            <p>Included relations :</p>
+                            <div class="text-center mt-2">
+                                <label class="ml-2">
+                                    <input type="checkbox" name="rbGenre" id="rdMovies">   Known for genre
+                                    <span class="checkmark"></span>
+                                </label>
+                                <br/>
+                                <label class="ml-2">
+                                    <input type="checkbox" name="rbPeople" id="rdPeopleKnown">   Relationships
+                                    <span class="checkmark"></span>
+                                </label>
+                                <label class="ml-2">
+                                    <input type="checkbox" name="rdSimilarForActing" id="rdSimilarForActing">   Similar for acting
+                                    <span class="checkmark"></span>
+                                </label>
+                                <label class="ml-2">
+                                    <input type="checkbox" name="rdSimilarForWorking" id="rdSimilarForWorking">   Similar for working
+                                    <span class="checkmark"></span>
+                                </label>
+                                <button class="btn btn-success mt-2" onclick="onSearchPeople();">Show people</button>
+                            </div>
+                        </li>
+                    </ul>
+                </li>
+                <li>
+                    <a href="#pageSubmenu" data-toggle="collapse" aria-expanded="false" class="dropdown-toggle">Genre</a>
+                    <ul class="collapse list-unstyled" id="pageSubmenu">
+                        <li>
+                            <a onclick="all_genres();">All genres</a>
+                        </li>
+                        <li>
+                            <select class="form-control basicAutoSelectGenre mt-2 searchInput" id="searchGenre" name="simple_select"
+                                    placeholder="Search genre" autocomplete="off"></select>
+                            <p>Included relations :</p>
+                            <div class="text-center mt-2">
+                                <label class="ml-2">
+                                    <input type="checkbox" name="rbGenre" id="rdMoviesAssociated">   Movies
+                                    <span class="checkmark"></span>
+                                </label>
+                                <br/>
+                                <label class="ml-2">
+                                    <input type="checkbox" name="rbPeople" id="rdPeopleAssociated">   People associated
+                                    <span class="checkmark"></span>
+                                </label>
+                                <button class="btn btn-success mt-2" onclick="onSearchGenre();">Show genre</button>
+                            </div>
+                        </li>
+                    </ul>
+                </li>
+                <li>
+                    <a href="#pageShortestPathSubmenu" data-toggle="collapse" aria-expanded="false" class="dropdown-toggle">Shortest path</a>
+                    <ul class="collapse list-unstyled" id="pageShortestPathSubmenu">
+                        <li class="mt-1">
+                            <select class="form-control basicAutoSelectPeople searchInput" id="SPP1" name="simple_select"
+                                    placeholder="People 1" autocomplete="off"></select>
+                        </li>
+                        <li class="mt-1">
+                            <select class="form-control basicAutoSelectPeople searchInput" id="SPP2" name="simple_select"
+                                    placeholder="People 2" autocomplete="off"></select>
+                        </li>
+                        <li class="text-center mt-2">
+                            <button class="btn btn-success btn-sm mt-1" onclick="shortest_path();">Compute shortest path</button>
+                        </li>
+                    </ul>
+                </li>
+                <li>
+                    <a href="#pageAlgoSubmenu" data-toggle="collapse" aria-expanded="false" class="dropdown-toggle">Algorithm config</a>
+                    <ul class="collapse list-unstyled" id="pageAlgoSubmenu">
+                        <p>Show size of movies nodes by</p>
+                        <li class="ml-2">
+                            <input type="radio" id="scoreMovie" name="MovieAlgoChoice" value="score"
+                                   onclick="draw(defineConfig())" checked>
+                            <label for="scoreMovie">By score of movies</label>
+                        </li>
+                        <li class="mt-1 ml-2">
+                            <input type="radio" id="pageRankSimilar" name="MovieAlgoChoice" value="pagerankSimilar"
+                                   onclick="draw(defineConfig())">
+                            <label for="pageRankSimilar">Page rank similar</label>
+                        </li>
+                        <li class="mt-1 ml-2">
+                            <input type="radio" id="pageRankReco" name="MovieAlgoChoice" value="pagerankRecommendations"
+                                   onclick="draw(defineConfig())">
+                            <label for="pageRankReco">Page rank reco</label>
+                        </li>
+                        <p>Show size of people nodes by</p>
+                        <li class="ml-2">
+                            <input type="radio" id="scorePeople" name="PeopleAlgoChoice" value="score"
+                                   onclick="draw(defineConfig())" checked>
+                            <label for="scorePeople">Score of people</label>
+                        </li>
+                        <li class="mt-1 ml-2">
+                            <input type="radio" id="centrality" name="PeopleAlgoChoice" value="knowsDegree"
+                                   onclick="draw(defineConfig())">
+                            <label for="centrality">Degree centrality</label>
+                        </li>
+                        <p>Show size of genre nodes by</p>
+                        <li class="mt-1 ml-2">
+                            <input type="radio" id="degree" name="GenreAlgoChoice" value="degree"
+                                   onclick="draw(defineConfig())" checked>
+                            <label for="degree">Degree</label>
+                        </li>
+                        <li class="ml-2">
+                            <input type="radio" id="belongsToDegree" name="GenreAlgoChoice" value="belongsToDegree"
+                                   onclick="draw(defineConfig())">
+                            <label for="belongsToDegree">Belongs to degree</label>
+                        </li>
+                        <li class="ml-2">
+                            <input type="radio" id="knownForDegree" name="GenreAlgoChoice" value="knownForDegree"
+                                   onclick="draw(defineConfig())">
+                            <label for="knownForDegree">Known for degree</label>
+                        </li>
+                        <li class="ml-2">
+                            <input type="radio" id="knownForActingDegree" name="GenreAlgoChoice" value="knownForActingDegree"
+                                   onclick="draw(defineConfig())">
+                            <label for="knownForActingDegree">known for A. degree</label>
+                        </li>
+                        <li class="ml-2">
+                            <input type="radio" id="knownForWorkingDegree" name="GenreAlgoChoice" value="knownForWorkingDegree"
+                                   onclick="draw(defineConfig())">
+                            <label for="knownForWorkingDegree">Known for W. degre</label>
+                        </li>
+                    </ul>
+                </li>
+                <li>
+                    <a href="#pageTextualReqSubmenu" data-toggle="collapse" aria-expanded="false" class="dropdown-toggle">Textual request</a>
+                    <ul class="collapse list-unstyled" id="pageTextualReqSubmenu">
+                        <li>
+                            <a onclick="best_score_movies();" data-toggle="modal" data-target="#exampleModalLong">Best score movies</a>
+                        </li>
+                        <li>
+                            <a onclick="movie_people_workin();">Req 2</a>
+                        </li>
+                        <li>
+                            <a onclick="movie_people_workin();">Req 3</a>
+                        </li>
+                    </ul>
+                </li>
+
+            </ul>
+
+            <ul class="list-unstyled CTAs">
+                <li>
+                    <a onclick="onSearchQuery();" class="download">Write your request</a>
+                </li>
+                <li>
+                    <a onclick="initialQuery();" class="article">Go to initial request</a>
+                </li>
+            </ul>
+        </nav>
+
+        <!-- Page Content Holder -->
+        <div id="content">
+
+            <nav class="navbar navbar-expand-lg navbar-light bg-light">
+                <div class="container-fluid">
+
+                    <button type="button" id="sidebarCollapse" class="navbar-btn">
+                        <span></span>
+                        <span></span>
+                        <span></span>
+                    </button>
+                    <button class="btn btn-dark d-inline-block d-lg-none ml-auto" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+                        <i class="fas fa-align-justify"></i>
+                    </button>
+
+                    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+                        <input type="text" id="searchBar" style="margin-left: 70px; width: 1000px;" placeholder="Enter your query" autocomplete=off>
+                        <button class="btn btn-primary btn-sm" onclick="execQuery();" style="margin-left: 10px;">Execute</button>
+                        <!-- MENU DES PAGES PAS UTILISE
+                        <ul class="nav navbar-nav ml-auto">
+                            <li class="nav-item active">
+                                <a class="nav-link" href="#">Page</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="#">Page</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="#">Page</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="#">Page</a>
+                            </li>
+                        </ul> -->
+                    </div>
+                </div>
+            </nav>
+                <div id="viz"></div>
+        </div>
+    </div>
+
+
+    <!-- Button trigger modal
+    <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#exampleModalLong">
+        Launch demo modal
+    </button>-->
+
+    <!-- Modal -->
+    <div class="modal fade" id="exampleModalLong" tabindex="-1" role="dialog" aria-labelledby="exampleModalLongTitle" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="exampleModalLongTitle">Textual request result</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div id="modal-body">
+                    <table id="modal-table">
+                    </table>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
                 </div>
             </div>
-        </nav>
-            <div id="viz"></div>
+        </div>
     </div>
-</div>
 
 
 

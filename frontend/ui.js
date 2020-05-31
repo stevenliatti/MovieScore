@@ -1,18 +1,25 @@
 var viz;
 
-const URL_DB = "bolt://localhost:7687";
+const URL_DB = "bolt://129.194.184.108:7687";
 const USER = "neo4j";
 const PWD = "wem2020";
-const INITIAL_QUERY = "MATCH p=(:Genre)<-[:BELONGS_TO|:KNOWN_FOR_ACTING|:KNOWN_FOR_WORKING]-() RETURN p LIMIT 50";
+var INITIAL_QUERY = "MATCH p=(:Genre)<-[:BELONGS_TO|:KNOWN_FOR_ACTING|:KNOWN_FOR_WORKING]-() RETURN p LIMIT 50";
+const TMDB_URL = "https://www.themoviedb.org/"
 
 const driver = neo4j.v1.driver(
-    'bolt://localhost',
+    'bolt://129.194.184.108',
     neo4j.v1.auth.basic(USER, PWD)
 )
 
 const session = driver.session()
 
-function draw() {
+function defineConfig() {
+    let sizeMovie = document.querySelector('input[name="MovieAlgoChoice"]:checked').value;
+    let sizePeople = document.querySelector('input[name="PeopleAlgoChoice"]:checked').value;
+    let sizeGenre = document.querySelector('input[name="GenreAlgoChoice"]:checked').value;
+    if(document.getElementById("searchBar").value !== '') // En cas de reload recup la query active
+        INITIAL_QUERY = document.getElementById("searchBar").value;
+
     var config = {
         container_id: "viz",
         server_url: URL_DB,
@@ -21,11 +28,12 @@ function draw() {
         labels: {
             "Movie": {
                 "caption": "title",
-                "size": "score"
+                "size": sizeMovie,
             },
             "People": {
                 "caption": "name",
-                "size": "score"
+                "size": sizePeople,
+                "community": "knowsCommunity"
             },
             "Actor": {
                 "caption": "name"
@@ -34,7 +42,9 @@ function draw() {
                 "caption": "name"
             },
             "Genre": {
-                "caption": "name"
+                "caption": "name",
+                size: sizeGenre
+                // TODO : "size": "  | knownForWorkingDegree"
             }
         },
         relationships: {
@@ -70,6 +80,11 @@ function draw() {
         initial_cypher: INITIAL_QUERY
     };
 
+    return config;
+}
+
+
+function draw(config) {
     viz = new NeoVis.default(config);
     viz.render();
 }
@@ -98,6 +113,8 @@ function onSearchMovie() {
         relations += ':RECOMMENDATIONS|';
     if(document.getElementById("rbSimilar").checked)
         relations += ':SIMILAR|';
+    if(document.getElementById("rbSimilarJaccard").checked)
+        relations += ':SIMILAR_JACCARD|';
     relations = relations.slice(0, -1);
     if(relations !== '')
         var q = `MATCH p=(m: Movie{title: "${title}"})-[${relations}]-() RETURN p`;
@@ -114,6 +131,10 @@ function onSearchPeople() {
         relations += ":KNOWN_FOR_ACTING|:KNOWN_FOR_WORKING|";
     if(document.getElementById("rdPeopleKnown").checked)
         relations += ":KNOWS|";
+    if(document.getElementById("rdSimilarForActing").checked)
+        relations += ":SIMILAR_FOR_ACTING|";
+    if(document.getElementById("rdSimilarForWorking").checked)
+        relations += ":SIMILAR_FOR_WORKING|";
     relations = relations.slice(0, -1);
     if(relations !== '')
         var q = `MATCH res=(p: People {name: "${name}"})-[${relations}]-() RETURN res`;
@@ -208,14 +229,73 @@ function genres_peoples() {
 }
 
 /*
- * Algos
+ * Textual requests
  */
-function page_rank() {
-    const q = ""; //TODO:
-    updateSearchBar(q);
-    viz.renderWithCypher(q);
+function best_score_movies() {
+    session
+        .run(`MATCH (m:Movie) RETURN m.id, m.title, m.score ORDER BY m.score DESC LIMIT 15`)
+        .then(res => {
+            const records = Array.from(res.records);
+            const movies = records.map(r => {
+                return {
+                    title: r._fields[1],
+                    score: r._fields[2],
+                    linkTMDB: TMDB_URL + 'movie/' + r._fields[0]
+                };
+            });
+            clearModalTableContent();
+            defineTableHeader("Title", "Score", "TMDb link");
+            movies.forEach(m => {
+                let title = document.createTextNode(m.title);
+                let score = document.createTextNode(Math.round(m.score * 100) / 100);
+                let link =  document.createElement("a");
+                link.appendChild(document.createTextNode("Show on TMDb"));
+                link.href = m.linkTMDB;
+                link.style.color = 'blue';
+                defineTableBody(title, score, link);
+            });
+        });
 }
 
+function clearModalTableContent() {
+    let tab = document.getElementById('modal-table');
+    tab.innerHTML = '';
+}
+
+function defineTableHeader(hCol1, hCol2, hCol3) {
+    let tableHeadRef = document.getElementById('modal-table');
+    let header = tableHeadRef.createTHead();
+    let row = header.insertRow(0);
+    let newHCell1 = row.insertCell(0);
+    let newHCell2 = row.insertCell(1);
+    let newHCell3 = row.insertCell(2);
+    let th1 = document.createElement("th");
+    let th2 = document.createElement("th");
+    let th3 = document.createElement("th");
+    th1.appendChild(document.createTextNode(hCol1));
+    th2.appendChild(document.createTextNode(hCol2));
+    th3.appendChild(document.createTextNode(hCol3));
+    newHCell1.appendChild(th1);
+    newHCell2.appendChild(th2);
+    newHCell3.appendChild(th3);
+}
+
+function defineTableBody(tb1, tb2, tb3) {
+    let tableBodyRef = document.getElementById('modal-table');
+    let body = tableBodyRef.createTBody();
+    let row = body.insertRow();
+    let newCell1  = row.insertCell(0);
+    let newCell2  = row.insertCell(1);
+    let newCell3  = row.insertCell(2);
+    newCell1.appendChild(tb1);
+    newCell2.appendChild(tb2);
+    newCell3.appendChild(tb3);
+}
+
+
+/*
+ * Algos
+ */
 function shortest_path() {
     const p1 = document.getElementById("SPP1").value;
     const p2 = document.getElementById("SPP2").value;
