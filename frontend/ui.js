@@ -74,7 +74,7 @@ function defineConfig() {
             "SIMILAR": {
                 "caption": false
             },
-            "SIMILAR_JACCARD": {
+            "SIMILAR_MOVIES_ALGO": {
                 "caption": false,
                 "thickness": "score"
             },
@@ -124,7 +124,7 @@ function onSearchMovie() {
     if(document.getElementById("rbSimilar").checked)
         relations += ':SIMILAR|';
     if(document.getElementById("rbSimilarJaccard").checked)
-        relations += ':SIMILAR_JACCARD|';
+        relations += ':SIMILAR_MOVIES_ALGO|';
     relations = relations.slice(0, -1);
     if(relations !== '')
         var q = `MATCH p=(m: Movie{title: "${title}"})-[${relations}]-() RETURN p`;

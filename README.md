@@ -150,9 +150,16 @@ Nous avons 3 types de noeuds (dont 2 sous-types) :
     - `gender`
     - `score` : redistribution d'une fraction des scores des films dans lequel ce `People` apparait divisé par ce même nombre de films
 
+Nous avons appliqué ces contraintes sur les trois types de noeuds :
+```SQL
+CREATE CONSTRAINT ON (m:Movie) ASSERT m.id IS UNIQUE;
+CREATE CONSTRAINT ON (g:Genre) ASSERT g.id IS UNIQUE;
+CREATE CONSTRAINT ON (p:People) ASSERT p.id IS UNIQUE;
+```
+
 ### Relations
 
-Nous avons 8 types de relations :
+Nous avons 8 types de relations principales :
 
 - `BELONGS_TO` : indique l'appartenance d'un `Movie` à un `Genre`
 - `PLAY_IN` : relie un `People/Actor` à un `Movie` avec comme attribut `character` indiquant le personnage interprété dans ce film
@@ -162,6 +169,155 @@ Nous avons 8 types de relations :
 - `KNOWS` : indique si deux `People` se connaissent (*id est* se sont croisés dans un même film) avec un attribut `count` dénombrant le nombre de fois où ces deux `People` se sont croisés
 - `SIMILAR` : relie chaque `Movie` à la liste de ses films semblables selon les critères TMDb
 - `RECOMMENDATIONS` : relie chaque `Movie` à la liste de ses films recommandés selon les utilisateurs de TMDb
+
+Nous calculé (voir section suivante) 3 relations supplémentaires :
+
+- `SIMILAR_MOVIES_ALGO` : relie chaque `Movie` à la liste de ses films semblables selon la similarité des genres en commun calculée avec Neo4j avec un attribut `score`
+- `SIMILAR_FOR_ACTING` : relie chaque `People` à la liste des *peoples* semblables selon la similarité des genres en commun calculée avec Neo4j avec un attribut `score`
+- `SIMILAR_FOR_WORKING` : relie chaque `People` à la liste des *peoples* semblables selon la similarité des genres en commun calculée avec Neo4j avec un attribut `score`
+
+## Application d'algorithmes sur le graphe
+
+Neo4j inclu par défaut [plusieurs algorithmes](https://neo4j.com/docs/graph-data-science/1.1/algorithms/) de graphe, à appliquer sur les noeuds et/ou arcs du graphe. Nous en avons appliqués certains sur nos données. Certains algorithmes, comme Page Rank, nécessitent la création d'un sous-graphe contenant les noeuds et les relations impliqués dans l'algorithme / calcul lui-même.
+
+### Algorithmes de centralité
+
+#### Page Rank
+
+Nous avons appliqué [Page Rank](https://neo4j.com/docs/graph-data-science/1.1/algorithms/page-rank/) sur les films avec comme lien la relation `SIMILAR` et avons stocké ce score dans une nouvelle propriété `pagerankSimilar` dans chaque noeud `Movie` :
+
+```
+// Création du sous-graphe
+CALL gds.graph.create(
+    'pagerank-movie-similar',
+    'Movie',
+    'SIMILAR'
+);
+
+// Exécution de Page Rank sur les films similaires
+CALL gds.pageRank.write('pagerank-movie-similar', {
+  maxIterations: 20,
+  dampingFactor: 0.85,
+  writeProperty: 'pagerankSimilar'
+}) YIELD nodePropertiesWritten AS writtenProperties, ranIterations;
+```
+
+Nous avons répété l'opération mais cette fois sur la relation `RECOMMENDATIONS`, pour obtenir un autre score `pagerankRecommendations` :
+
+```
+// Création du sous-graphe
+CALL gds.graph.create(
+    'pagerank-movie-recommendations',
+    'Movie',
+    'RECOMMENDATIONS'
+);
+
+// Exécution de Page Rank sur les films recommendés
+CALL gds.pageRank.write('pagerank-movie-recommendations', {
+  maxIterations: 20,
+  dampingFactor: 0.85,
+  writeProperty: 'pagerankRecommendations'
+}) YIELD nodePropertiesWritten AS writtenProperties, ranIterations;
+```
+
+#### Degré de centralité
+
+Pour les *peoples* nous nous sommes servis du [Degree Centrality](https://neo4j.com/docs/graph-data-science/1.1/algorithms/degree-centrality/) algorithme pour ajouter un nouvel attribut, le score `knowsDegree` aux noeuds `People` selon la relation récursive `KNOWS`.
+
+```
+// calcul le Degree Centrality pour les People avec KNOWS
+CALL gds.alpha.degree.write({
+  nodeProjection: 'People',
+  relationshipProjection: {
+    KNOWS: {
+      type: 'KNOWS',
+      projection: 'REVERSE'
+    }
+  },
+  writeProperty: 'knowsDegree'
+});
+```
+
+Pour les genres, nous avons procédé au calcul de ce degré à la main, en comptant le nombre d'arc entrants (par type de relation) dans les noeuds `Genre`, car l'exécution du précédent algorithme ne fonctionnait pas dans cette situation. Nous obtenons ainsi cinq nouveaux attributs de score pour les genres :
+
+```
+// ajout de propriétés de taille aux Genre
+MATCH (g:Genre)
+SET g.belongsToDegree = size((g)<-[:BELONGS_TO]-())
+SET g.knownForActingDegree = size((g)<-[:KNOWN_FOR_ACTING]-())
+SET g.knownForWorkingDegree = size((g)<-[:KNOWN_FOR_WORKING]-())
+SET g.knownForDegree = size((g)<-[:KNOWN_FOR_WORKING|:KNOWN_FOR_ACTING]-())
+SET g.degree = size((g)<-[:BELONGS_TO|:KNOWN_FOR_WORKING|:KNOWN_FOR_ACTING]-());
+```
+
+### Algorithmes de communautés
+
+Nous nous sommes servis de l'algorithme de [Louvain](https://neo4j.com/docs/graph-data-science/1.1/algorithms/louvain/) pour regrouper les *peoples* par communautés selon le `count` de la relation `KNOWS` qu'ils ont entre eux.
+
+```
+// Création du sous-graphe
+CALL gds.graph.create(
+    'people-knows-community-louvain-graph',
+    'People',
+    {
+        KNOWS: {
+            orientation: 'UNDIRECTED'
+        }
+    },
+    {
+        relationshipProperties: 'count'
+    }
+);
+
+// Exécution de Louvain sur les peoples
+CALL gds.louvain.write(
+    'people-knows-community-louvain-graph',
+    { writeProperty: 'knowsCommunity' }
+)
+YIELD communityCount, modularity, modularities;
+```
+
+### Algorithmes de similarité entre noeuds
+
+Nous avons également appliqué l'algorithme [Node Similarity](https://neo4j.com/docs/graph-data-science/1.1/algorithms/node-similarity/) sur les films et les *peoples* selon les genres vers lesquels ils pointent. Pour les films, la nouvelle relation `SIMILAR_MOVIES_ALGO` est proche de `SIMILAR` déjà existante, mais il peut être intéressant de voir les différences. Les *peoples* gagnent quant à eux les relations vers les genres nommés `SIMILAR_FOR_ACTING` et `SIMILAR_FOR_WORKING` selon leur ressemblance en fonction des genres dans lesquels ils ont joué / travaillé.
+
+```
+// Création du sous-graphe
+CALL gds.graph.create(
+    'movie-belongs-to-node-similar',
+    ['Movie', 'Genre'],
+    'BELONGS_TO'
+);
+// Exécution de la similarité sur les films (BELONGS_TO)
+CALL gds.nodeSimilarity.write('movie-belongs-to-node-similar', {
+    writeRelationshipType: 'SIMILAR_MOVIES_ALGO',
+    writeProperty: 'score'
+}) YIELD nodesCompared, relationshipsWritten;
+
+// Création du sous-graphe
+CALL gds.graph.create(
+    'people-known-for-acting-node-similar',
+    ['People', 'Genre'],
+    'KNOWN_FOR_ACTING'
+);
+// Exécution de la similarité sur les peoples (KNOWN_FOR_ACTING)
+CALL gds.nodeSimilarity.write('people-known-for-acting-node-similar', {
+    writeRelationshipType: 'SIMILAR_FOR_ACTING',
+    writeProperty: 'score'
+}) YIELD nodesCompared, relationshipsWritten;
+
+// Création du sous-graphe
+CALL gds.graph.create(
+    'people-known-for-working-node-similar',
+    ['People', 'Genre'],
+    'KNOWN_FOR_WORKING'
+);
+// Exécution de la similarité sur les peoples (KNOWN_FOR_WORKING)
+CALL gds.nodeSimilarity.write('people-known-for-working-node-similar', {
+    writeRelationshipType: 'SIMILAR_FOR_WORKING',
+    writeProperty: 'score'
+}) YIELD nodesCompared, relationshipsWritten;
+```
 
 
 # Architecture

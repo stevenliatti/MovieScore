@@ -194,11 +194,12 @@ CALL gds.alpha.degree.write({
 // GENRE DEGREE
 
 // ajout de propriétés de taille aux Genre
-MATCH (g:Genre) SET g.belongsToDegree = size( (g)<-[:BELONGS_TO]-() );
-MATCH (g:Genre) SET g.knownForActingDegree = size( (g)<-[:KNOWN_FOR_ACTING]-() );
-MATCH (g:Genre) SET g.knownForWorkingDegree = size( (g)<-[:KNOWN_FOR_WORKING]-() );
-MATCH (g:Genre) SET g.knownForDegree = size( (g)<-[:KNOWN_FOR_WORKING|:KNOWN_FOR_ACTING]-() );
-MATCH (g:Genre) SET g.degree = size( (g)<-[:BELONGS_TO|:KNOWN_FOR_WORKING|:KNOWN_FOR_ACTING]-() );
+MATCH (g:Genre)
+SET g.belongsToDegree = size((g)<-[:BELONGS_TO]-())
+SET g.knownForActingDegree = size((g)<-[:KNOWN_FOR_ACTING]-())
+SET g.knownForWorkingDegree = size((g)<-[:KNOWN_FOR_WORKING]-())
+SET g.knownForDegree = size((g)<-[:KNOWN_FOR_WORKING|:KNOWN_FOR_ACTING]-())
+SET g.degree = size((g)<-[:BELONGS_TO|:KNOWN_FOR_WORKING|:KNOWN_FOR_ACTING]-());
 
 
 // -----------------------------------------------------------------
@@ -229,7 +230,7 @@ CALL gds.graph.create('movie-belongs-to-node-similar', ['Movie', 'Genre'], 'BELO
 
 // execute
 CALL gds.nodeSimilarity.write('movie-belongs-to-node-similar', {
-    writeRelationshipType: 'SIMILAR_JACCARD',
+    writeRelationshipType: 'SIMILAR_MOVIES_ALGO',
     writeProperty: 'score'
 }) YIELD nodesCompared, relationshipsWritten;
 
