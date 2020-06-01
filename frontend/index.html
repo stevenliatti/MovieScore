@@ -29,16 +29,16 @@
                     <a href="#movieSubmenu" data-toggle="collapse" aria-expanded="false" class="dropdown-toggle">Movie</a>
                     <ul class="collapse list-unstyled" id="movieSubmenu">
                         <li>
-                            <a onclick="all_movies();">All movies</a>
+                            <a onclick="allMovies();">All movies</a>
                         </li>
                         <li>
-                            <a onclick="movie_genre();">Movies & genre</a>
+                            <a onclick="movieGenre();">Movies & genre</a>
                         </li>
                         <li>
-                            <a onclick="movie_people_playin();">Actors</a>
+                            <a onclick="moviePeoplePlayIn();">Actors</a>
                         </li>
                         <li>
-                            <a onclick="movie_people_workin();">Movie makers</a>
+                            <a onclick="moviePeopleWorkIn();">Movie makers</a>
                         </li>
                         <li>
                             <select class="form-control basicAutoSelectMovie mt-2 searchInput" id="searchMovie" name="simple_select"
@@ -75,13 +75,13 @@
                     <a href="#peopleSubmenu" data-toggle="collapse" aria-expanded="false" class="dropdown-toggle">People</a>
                     <ul class="collapse list-unstyled" id="peopleSubmenu">
                         <li>
-                            <a onclick="all_people();">All peoples</a>
+                            <a onclick="allPeople();">All peoples</a>
                         </li>
                         <li>
-                            <a onclick="knowledge_people();">Knowledge between people</a>
+                            <a onclick="knowledgePeople();">Knowledge between people</a>
                         </li>
                         <li>
-                            <a onclick="people_knownFor();">People known for</a>
+                            <a onclick="peopleKnownFor();">People known for</a>
                         </li>
                         <li>
                             <select class="form-control basicAutoSelectPeople mt-2 searchInput" id="searchPeople" name="simple_select"
@@ -114,7 +114,7 @@
                     <a href="#pageSubmenu" data-toggle="collapse" aria-expanded="false" class="dropdown-toggle">Genre</a>
                     <ul class="collapse list-unstyled" id="pageSubmenu">
                         <li>
-                            <a onclick="all_genres();">All genres</a>
+                            <a onclick="allGenres();">All genres</a>
                         </li>
                         <li>
                             <select class="form-control basicAutoSelectGenre mt-2 searchInput" id="searchGenre" name="simple_select"
@@ -147,7 +147,19 @@
                                     placeholder="People 2" autocomplete="off"></select>
                         </li>
                         <li class="text-center mt-2">
-                            <button class="btn btn-success btn-sm mt-1" onclick="shortest_path();">Compute shortest path</button>
+                            <button class="btn btn-success btn-sm mt-1" onclick="shortestPath();">Compute shortest path</button>
+                        </li>
+                    </ul>
+                </li>
+                <li>
+                    <a href="#peoplesCommunitySubmenu" data-toggle="collapse" aria-expanded="false" class="dropdown-toggle">People community</a>
+                    <ul class="collapse list-unstyled" id="peoplesCommunitySubmenu">
+                        <li class="mt-1">
+                            <select class="form-control basicAutoSelectPeople searchInput" id="peopleCommunityInput" name="simple_select"
+                                    placeholder="People" autocomplete="off"></select>
+                        </li>
+                        <li class="text-center mt-2">
+                            <button class="btn btn-success btn-sm mt-1" onclick="communityPeople();">Show community</button>
                         </li>
                     </ul>
                 </li>
@@ -213,13 +225,13 @@
                     <a href="#pageTextualReqSubmenu" data-toggle="collapse" aria-expanded="false" class="dropdown-toggle">Textual request</a>
                     <ul class="collapse list-unstyled" id="pageTextualReqSubmenu">
                         <li>
-                            <a onclick="best_score_movies();" data-toggle="modal" data-target="#exampleModalLong">Best score movies</a>
+                            <a onclick="bestScoreMovies();" data-toggle="modal" data-target="#exampleModalLong">Best score movies</a>
                         </li>
                         <li>
-                            <a onclick="movie_people_workin();">Req 2</a>
+                            <a onclick="bestDegreePeoples();" data-toggle="modal" data-target="#exampleModalLong">Best peoples by degree</a>
                         </li>
                         <li>
-                            <a onclick="movie_people_workin();">Req 3</a>
+                            <a onclick="bestDegreeGenres();" data-toggle="modal" data-target="#exampleModalLong">Best genres by degree</a>
                         </li>
                     </ul>
                 </li>
@@ -293,7 +305,7 @@
                     </button>
                 </div>
                 <div id="modal-body">
-                    <table id="modal-table">
+                    <table id="modal-table" class="table table-bordered">
                     </table>
                 </div>
                 <div class="modal-footer">

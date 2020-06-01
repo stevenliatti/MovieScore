@@ -3,7 +3,7 @@ var viz;
 const URL_DB = "bolt://129.194.184.111:7687";
 const USER = "neo4j";
 const PWD = "wem2020";
-const INITIAL_QUERY = "MATCH r=()-[:SIMILAR]->(m:Movie)-->(g:Genre)<-[:KNOWN_FOR_ACTING|:KNOWN_FOR_WORKING]-(p:People)-[:KNOWS|:PLAY_IN|:WORK_IN]->() RETURN r LIMIT 50";
+const INITIAL_QUERY = "MATCH r=(p:People)-->(m:Movie)-->(g:Genre) RETURN r ORDER BY m.score LIMIT 500";
 const TMDB_URL = "https://www.themoviedb.org/"
 
 const driver = neo4j.v1.driver(
@@ -178,62 +178,50 @@ function initialQuery() {
 /*
  * Neo4j request
  */
-function all_movies() {
+function allMovies() {
     const q = "MATCH (m:Movie) RETURN m ORDER BY m.score DESC LIMIT 100";
     updateSearchBar(q);
     viz.renderWithCypher(q);
 }
 
-function movie_genre() {
+function movieGenre() {
     const q = "MATCH p=(m)-[r:BELONGS_TO]->() RETURN p ORDER BY m.score DESC LIMIT 50";
     updateSearchBar(q);
     viz.renderWithCypher(q);
 }
 
-function movie_people_playin() {
+function moviePeoplePlayIn() {
     const q = "MATCH r=(p)-[:PLAY_IN]->() RETURN r ORDER BY p.score DESC LIMIT 50";
     updateSearchBar(q);
     viz.renderWithCypher(q);
 }
 
-function movie_people_workin() {
+function moviePeopleWorkIn() {
     const q = "MATCH r=(p)-[:WORK_IN]->() RETURN r ORDER BY p.score DESC LIMIT 50";
     updateSearchBar(q);
     viz.renderWithCypher(q);
 }
 
-function all_people() {
+function allPeople() {
     const q = "MATCH (p:People) RETURN p ORDER BY p.score DESC LIMIT 500";
     updateSearchBar(q);
     viz.renderWithCypher(q);
 }
 
-function knowledge_people() {
-    const q = "MATCH r=(p:People)-[:KNOWS]->() RETURN r ORDER BY p.knowDegree DESC LIMIT 100";
+function knowledgePeople() {
+    const q = "MATCH r=(p:People)-[:KNOWS]->() RETURN r ORDER BY p.knowsDegree DESC LIMIT 100";
     updateSearchBar(q);
     viz.renderWithCypher(q);
 }
 
-function people_knownFor() {
-    const q = "MATCH r=(a: Actor)-->(g: Genre)<--(mm: MovieMaker) RETURN r ORDER BY a.knowDegree DESC LIMIT 200";
+function peopleKnownFor() {
+    const q = "MATCH r=(a: Actor)-->(g: Genre)<--(mm: MovieMaker) RETURN r ORDER BY a.knowsDegree DESC LIMIT 200";
     updateSearchBar(q);
     viz.renderWithCypher(q);
 }
 
-function all_genres() {
+function allGenres() {
     const q = "MATCH (n:Genre) RETURN n ORDER BY n.degree DESC LIMIT 100";
-    updateSearchBar(q);
-    viz.renderWithCypher(q);
-}
-
-function genres_movies() {
-    const q = ""; //TODO:
-    updateSearchBar(q);
-    viz.renderWithCypher(q);
-}
-
-function genres_peoples() {
-    const q = ""; //TODO:
     updateSearchBar(q);
     viz.renderWithCypher(q);
 }
@@ -241,30 +229,59 @@ function genres_peoples() {
 /*
  * Textual requests
  */
-function best_score_movies() {
+
+function bestNodes(cypherQuery, firstKey, secondKey, tmdbType) {
     session
-        .run(`MATCH (m:Movie) RETURN m.id, m.title, m.score ORDER BY m.score DESC LIMIT 15`)
+        .run(cypherQuery)
         .then(res => {
             const records = Array.from(res.records);
-            const movies = records.map(r => {
+            const nodes = records.map(r => {
                 return {
                     title: r._fields[1],
                     score: r._fields[2],
-                    linkTMDB: TMDB_URL + 'movie/' + r._fields[0]
+                    linkTMDB: TMDB_URL + tmdbType + '/' + r._fields[0]
                 };
             });
             clearModalTableContent();
-            defineTableHeader("Title", "Score", "TMDb link");
-            movies.forEach(m => {
-                let title = document.createTextNode(m.title);
+            defineTableHeader(firstKey, secondKey);
+            nodes.forEach(m => {
+                let title = document.createElement("a");
                 let score = document.createTextNode(Math.round(m.score * 100) / 100);
-                let link =  document.createElement("a");
-                link.appendChild(document.createTextNode("Show on TMDb"));
-                link.href = m.linkTMDB;
-                link.style.color = 'blue';
-                defineTableBody(title, score, link);
+                title.appendChild(document.createTextNode(m.title));
+                title.href = m.linkTMDB;
+                title.title = `Show ${tmdbType} on TMDb`;
+                title.style.color = 'blue';
+                title.target = "_blank"
+                defineTableBody(title, score);
             });
         });
+}
+
+function bestScoreMovies() {
+    bestNodes(
+        `MATCH (m:Movie) RETURN DISTINCT m.id, m.title, m.score ORDER BY m.score DESC LIMIT 15`,
+        "Title",
+        "Score",
+        "movie"
+    );
+}
+
+function bestDegreePeoples() {
+    bestNodes(
+        `MATCH (p:People) RETURN DISTINCT p.id, p.name, p.knowsDegree ORDER BY p.knowsDegree DESC LIMIT 15`,
+        "Name",
+        "Degree",
+        "person"
+    );
+}
+
+function bestDegreeGenres() {
+    bestNodes(
+        `MATCH (g:Genre) RETURN DISTINCT g.id, g.name, g.degree ORDER BY g.degree DESC LIMIT 15`,
+        "Name",
+        "Degree",
+        "genre"
+    );
 }
 
 function clearModalTableContent() {
@@ -272,41 +289,35 @@ function clearModalTableContent() {
     tab.innerHTML = '';
 }
 
-function defineTableHeader(hCol1, hCol2, hCol3) {
+function defineTableHeader(hCol1, hCol2) {
     let tableHeadRef = document.getElementById('modal-table');
     let header = tableHeadRef.createTHead();
     let row = header.insertRow(0);
     let newHCell1 = row.insertCell(0);
     let newHCell2 = row.insertCell(1);
-    let newHCell3 = row.insertCell(2);
     let th1 = document.createElement("th");
     let th2 = document.createElement("th");
-    let th3 = document.createElement("th");
     th1.appendChild(document.createTextNode(hCol1));
     th2.appendChild(document.createTextNode(hCol2));
-    th3.appendChild(document.createTextNode(hCol3));
     newHCell1.appendChild(th1);
     newHCell2.appendChild(th2);
-    newHCell3.appendChild(th3);
 }
 
-function defineTableBody(tb1, tb2, tb3) {
+function defineTableBody(tb1, tb2) {
     let tableBodyRef = document.getElementById('modal-table');
     let body = tableBodyRef.createTBody();
     let row = body.insertRow();
     let newCell1  = row.insertCell(0);
     let newCell2  = row.insertCell(1);
-    let newCell3  = row.insertCell(2);
     newCell1.appendChild(tb1);
     newCell2.appendChild(tb2);
-    newCell3.appendChild(tb3);
 }
 
 
 /*
  * Algos
  */
-function shortest_path() {
+function shortestPath() {
     const p1 = document.getElementById("SPP1").value;
     const p2 = document.getElementById("SPP2").value;
     const q = `MATCH (p1:People { name: '${p1}'}),(p2:People {name: '${p2}' }), p = shortestPath((p1)-[r:KNOWS *]-(p2)) RETURN p`;
@@ -314,6 +325,12 @@ function shortest_path() {
     viz.renderWithCypher(q);
 }
 
+function communityPeople() {
+    const p = document.getElementById("peopleCommunityInput").value;
+    const q = `MATCH r=(p:People {name: '${p}'})--(pp:People {knowsCommunity: p.knowsCommunity} ) RETURN r`;
+    updateSearchBar(q);
+    viz.renderWithCypher(q);
+}
 
 /*
  * User to side navbar
