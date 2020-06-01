@@ -8,6 +8,9 @@ fontsize : 12pt
 geometry : margin = 3cm
 ---
 
+![Movie Score](report/images-frontend/initial.png)
+
+
 # Buts
 Les buts de ce projet sont de déterminer les scores de films selon leur ratio revenu sur budget, de déterminer l'influence qu'ils ont sur les "peoples" (acteurs et membres de l'équipe de réalisation) qui ont participé aux-dits films et montrer les genres de films les plus populaires.
 
@@ -319,6 +322,15 @@ CALL gds.nodeSimilarity.write('people-known-for-working-node-similar', {
 }) YIELD nodesCompared, relationshipsWritten;
 ```
 
+### Algorithmes de plus court chemin
+
+Nous nous sommes servis de l'algorithme [Shortest Path](https://neo4j.com/docs/cypher-manual/current/execution-plans/shortestpath-planning/) inclu dans Cypher directement dans l'interface (voir section Frontend) pour visualiser le plus court chemin entre deux *peoples* via leur relation `KNOWS`.
+
+```
+MATCH (p1:People {name: 'Brad Pitt'}), (p2:People {name: 'Johnny Depp'}),
+p = shortestPath((p1)-[r:KNOWS *]-(p2))
+RETURN p
+```
 
 # Architecture
 
@@ -445,11 +457,12 @@ Un `makefile` est disponible dans `collector` pour exécuter chaque étape de la
 
 ## Parsing et insertion dans Neo4j
 
-Nous avons réalisé un programme lisant les données brutes en JSON provenant de la collecte de TMDb et qui les insèrent selon nos besoins dans Neo4j. Nous avons choisi Scala comme langage, en raison de ses performances, de la justesse du langage et aussi pour bénéficier de la librairie [spray-json](https://github.com/spray/spray-json) pour la désérialisation du JSON et de [neotypes](https://neotypes.github.io/neotypes/), le driver Neo4j Scala basé sur le driver officiel Java. Le programme est constitué de trois grandes étapes :
+Nous avons réalisé un programme lisant les données brutes en JSON provenant de la collecte de TMDb et qui les insèrent selon nos besoins dans Neo4j. Nous avons choisi Scala comme langage, en raison de ses performances, de la justesse du langage et aussi pour bénéficier de la librairie [spray-json](https://github.com/spray/spray-json) pour la désérialisation du JSON et de [neotypes](https://neotypes.github.io/neotypes/), le driver Neo4j Scala basé sur le driver officiel Java. Le programme est constitué de quatre grandes étapes :
 
 1. Parcours des films désérialisés : ajout de chaque film ainsi que création/mise à jour des genres et des *peoples* associés avec leurs relations respectives. Comme il peut y avoir de nombreux *peoples* associés à un film, nous prenons au plus les 30 premiers acteurs d'un film, classés par TMDb selon leur ordre d'importance dans le film et nous sélectionnons les *movie makers* selon une liste arbitraire des jobs les plus représentatifs. C'est également dans cette boucle principale que le score des *peoples* commence à être calculé (somme des fractions des scores des films).
 1. Après avoir inséré tous les films, un deuxième parcours des films est effectué pour leur ajouter leurs films similaires et recommendés respectifs, selon si ces derniers sont également déjà présents dans Neo4j.
 1. Une fois tous les *peoples* insérés, nous divisons le score temporaire par le nombre de films dans lequel ils ont joué.
+1. Les algorithmes choisis sont exécutés sur l'ensemble des données insérées.
 
 Les insertions de noeuds et des relations se font avec le langage de requêtes de Neo4j, [Cypher](https://neo4j.com/developer/cypher-query-language/). À titre d'exemple, ci-dessous se trouve notre méthode Scala pour l'insertion des genres associés à un film :
 
@@ -470,11 +483,108 @@ def addGenres(genre: Genre, m: Movie): Future[Unit] = driver.readSession { sessi
 
 
 ## Frontend
-<!-- TODO: -->
 
+Nous avons réalisé un frontend web à l'aide de [neovis.js](https://github.com/neo4j-contrib/neovis.js), du [driver Neo4j javascript](https://github.com/neo4j/neo4j-javascript-driver) et de [Bootstrap](https://getbootstrap.com/) pour l'autocomplétion et le design CSS. Notre interface permet d'exécuter des requêtes Cypher directement dans la barre de requêtes ou via des boutons avec requêtes pré-enregistrées et de visualiser les résultats sous forme de graphe, avec des noeuds et arcs de taille et couleurs différentes symbolisant le score des noeuds, les types de noeuds différents, les communautés de *peoples* ou encore la force des liens entre différents noeuds.
 
-# Résultats attendus
-Nous nous attendons à pouvoir comparer les scores des films entre eux, trouver des communautés d'acteurs/films/genres, ou de voir les genres de films les plus populaires.
+La requête initiale récupère un échantillon de 500 noeuds de genres, films et *peoples* associés, ordonnés par le score des films :
+```js
+const INITIAL_QUERY =
+    "MATCH r=(p:People)-->(m:Movie)-->(g:Genre) \
+    RETURN r ORDER BY m.score LIMIT 500";
+```
+
+La configuration initiale de neovis.js est la suivante : 
+
+```js
+var config = {
+    container_id: "viz",
+    server_url: URL_DB,
+    server_user: USER,
+    server_password: PWD,
+    labels: {
+        "Movie": {
+            "caption": "title",
+            "size": sizeMovie,
+        },
+        "People": {
+            "caption": "name",
+            "size": sizePeople,
+            "community": "knowsCommunity"
+        },
+        "Actor": {
+            "caption": "name"
+        },
+        "MovieMaker": {
+            "caption": "name"
+        },
+        "Genre": {
+            "caption": "name",
+            "size": sizeGenre
+        }
+    },
+    relationships: {
+        "BELONGS_TO": {
+            "caption": false
+        },
+        "KNOWN_FOR_ACTING": {
+            "caption": false,
+            "thickness": "count"
+        },
+        "KNOWN_FOR_WORKING": {
+            "caption": false,
+            "thickness": "count"
+        },
+        "KNOWS": {
+            "caption": false,
+            "thickness": "count"
+        },
+        "PLAY_IN": {
+            "caption": false
+        },
+        "WORK_IN": {
+            "caption": false
+        },
+        "RECOMMENDATIONS": {
+            "caption": false
+        },
+        "SIMILAR": {
+            "caption": false
+        },
+        "SIMILAR_MOVIES_ALGO": {
+            "caption": false,
+            "thickness": "score"
+        },
+        "SIMILAR_FOR_ACTING": {
+            "caption": false,
+            "thickness": "score"
+        },
+        "SIMILAR_FOR_WORKING": {
+            "caption": false,
+            "thickness": "score"
+        }
+    },
+    initial_cypher: INITIAL_QUERY
+};
+```
+
+Tous les noeuds et relations sont décrits et la plupart des tailles de noeuds épaisseurs d'arcs sont configurées pour correspondre à des attributs de noeuds ou de relations comme le score ou le compteur de relations.
+
+Trois sections pour les films, les genres et les *peoples* sont disponibles pour exécuter des requêtes sur ces types de noeuds propres ainsi que trois champs input où l'utilisateur peut entrer le nom d'un film, genre ou *people* et obtenir les relations et noeuds associés au nom entré. Des cases à cocher invitent à activer ou désactiver l'affichage de certaines relations. L'autocomplétion est active sur les champs input.
+
+![Movie](report/images-frontend/movie.png)
+
+Il est possible d'exécuter le plus court chemin entre deux *peoples* en fonction de leur relation `KNOWS`. La taille des noeuds peut être ajustée selon différents critères calculés avec les algorithmes.
+
+![Movie](report/images-frontend/shortest-path.png)
+
+Un input permet de visualiser la communauté d'un *people*.
+
+![Movie](report/images-frontend/people-community.png)
+
+Certaines requêtes peuvent également être visualisées sous forme de tableau, comme la liste des meilleurs films selon leur score.
+
+![Movie](report/images-frontend/textual-request.png)
+
 
 ## Test de validation du projet
 En ce qui concerne la phase de test, nous avons prévu d'effectuer des tests unitaires au niveau des méthodes critiques et complexes, notament celles visant à interroger la base de données.
