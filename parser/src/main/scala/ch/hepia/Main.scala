@@ -148,7 +148,7 @@ object Main {
 
     def genresPeopleCount(gfpList: List[GenreForPeople], kind: String): Map[Long, (People, Int)] = {
       val knownFor = gfpList.filter(gfp => gfp.people.getClass.toString == kind)
-      println(gfpList, kind, knownFor)
+      //println(gfpList, kind, knownFor)
       val genresFor = knownFor.groupBy(gfp => gfp.genreId)
         .map { case (l, peoples) => (l, peoples.map(p => p.people))}
       genresFor
@@ -166,7 +166,7 @@ object Main {
       (_, (genresActingCount, _)) <- knownForRelations
       (genreId, (people, count)) <- genresActingCount
     } yield {
-      println(s"Acting, $genreId, $people, $count")
+      //println(s"Acting, $genreId, $people, $count")
       movieService.addKnownForRelation(people, genreId, count)
     }
 
@@ -174,7 +174,7 @@ object Main {
       (_, (_, genresWorkingCount)) <- knownForRelations
       (genreId, (people, count)) <- genresWorkingCount
     } yield {
-      println(s"Working, $genreId, $people, $count")
+      //println(s"Working, $genreId, $people, $count")
       movieService.addKnownForRelation(people, genreId, count)
     }
 
