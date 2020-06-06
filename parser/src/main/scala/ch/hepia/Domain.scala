@@ -40,4 +40,8 @@ object Domain {
                    credits: Credits,
                    similar: Option[Similar],
                    recommendations: Option[Recommendations])
+
+  case class SimplePeople(id: Long, name: String, gender: String)
+  case class MovieForPeople(movieId: Long, people: People, score: Double)
+  case class GenreForPeople(genreId: Long, people: People)
 }

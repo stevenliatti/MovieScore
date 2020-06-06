@@ -12,8 +12,8 @@ import neotypes.Driver
 import neotypes.implicits._
 import spray.json.JsonParser
 
-import scala.concurrent.duration.Duration
-import scala.concurrent.{Await, Future}
+import scala.collection.mutable
+import scala.concurrent.Future
 import scala.io.Source
 
 /**
@@ -24,9 +24,7 @@ import scala.io.Source
  */
 class MovieService(driver: Driver[Future]) {
 
-  private val movieMakerScoreDivisor = 2.0
-
-  private def computeMovieScore(movie: Movie): Double = {
+  def computeMovieScore(movie: Movie): Double = {
     movie.revenue.toDouble / movie.budget.toDouble
   }
 
@@ -51,103 +49,78 @@ class MovieService(driver: Driver[Future]) {
      })""".query[Unit].execute(session)
   }
 
-  def addGenres(genre: Genre, m: Movie): Future[Unit] = driver.readSession { session =>
-    val f = c"""MERGE (genre: Genre {
+  def addGenres(genre: Genre): Future[Unit] = driver.readSession { session =>
+    c"""MERGE (genre: Genre {
       id: ${genre.id},
       name: ${genre.name}})""".query[Unit].execute(session)
-
-    Await.result(f, Duration.Inf)
-
-    c"""MATCH (m: Movie {id: ${m.id}})
-        MATCH (g: Genre {id: ${genre.id}})
-        MERGE (m)-[r:BELONGS_TO]->(g)
-     """.query[Unit].execute(session)
   }
 
-  private def sumPeopleScore(people: People, movie: Movie): Double = {
-    val movieScore = computeMovieScore(movie)
-    val peopleRank = people match {
-      case a: Actor => (a.order + 1).toDouble
-      case _: MovieMaker => movieMakerScoreDivisor
-    }
-    movieScore / peopleRank
-  }
-
-  def addPeople(people: People, m: Movie): Future[Unit] = driver.readSession { session =>
-    val peopleScore = sumPeopleScore(people, m)
-    people match {
-      case a: Actor =>
-          val f = c"""MERGE (p:People {
+  def addPeople(people: SimplePeople, score: Double, labels: mutable.Set[String]): Future[Unit] = driver.readSession { session =>
+      if (labels("Actor") && labels("MovieMaker")) {
+        c"""CREATE (p:People {
           id: ${people.id},
           name: ${people.name},
-          gender: ${people.intToGender()}
+          gender: ${people.gender},
+          score: $score
         })
-        ON CREATE SET p.score = $peopleScore
-        ON MATCH SET p.score = p.score+$peopleScore
+        SET p: Actor
+        SET p: MovieMaker""".query[Unit].execute(session)
+      }
+      else if (labels("Actor")) {
+        c"""CREATE (p:People {
+          id: ${people.id},
+          name: ${people.name},
+          gender: ${people.gender},
+          score: $score
+        })
         SET p: Actor""".query[Unit].execute(session)
+      }
+      else {
+        c"""CREATE (p:People {
+          id: ${people.id},
+          name: ${people.name},
+          gender: ${people.gender},
+          score: $score
+        })
+        SET p: MovieMaker""".query[Unit].execute(session)
+      }
+  }
 
-        Await.result(f, Duration.Inf)
-
-        c"""MATCH (m: Movie {id: ${m.id}})
+  def addInMoviesRelation(people: People, movieId: Long) : Future[Unit] = driver.readSession { session =>
+    people match {
+      case a: Actor =>
+        c"""MATCH (m: Movie {id: $movieId})
         MATCH (p: Actor {id: ${people.id}})
         MERGE (p)-[r:PLAY_IN {character: ${a.character}}]->(m)
         """.query[Unit].execute(session)
       case mm: MovieMaker =>
-        val f = c"""MERGE (p:People {
-          id: ${people.id},
-          name: ${people.name},
-          gender: ${people.intToGender()}
-        })
-        ON CREATE SET p.score = $peopleScore
-        ON MATCH SET p.score = p.score+$peopleScore
-        SET p: MovieMaker""".query[Unit].execute(session)
-
-        Await.result(f, Duration.Inf)
-
-        c"""MATCH (m: Movie {id: ${m.id}})
+        c"""MATCH (m: Movie {id: $movieId})
         MATCH (p: MovieMaker {id: ${people.id}})
         MERGE (p)-[r:WORK_IN {job: ${mm.job}}]->(m)
         """.query[Unit].execute(session)
     }
   }
 
-  def computeFinalPeopleScore(people: People): Future[Unit] = driver.readSession { session =>
-    val f = c"""MATCH (People {id: ${people.id}})-->(m:Movie) RETURN count(*)"""
-      .query[Int].single(session)
-    
-    val count = Await.result(f, Duration.Inf)
-
-    c"""MATCH (p:People {id: ${people.id}})
-        SET p.score = p.score / $count
-        RETURN p""".query[Unit].execute(session)
-  }
-
-  def addKnownForRelation(people: People, genre: Genre) : Future[Unit] = driver.readSession { session =>
+  def addKnownForRelation(people: People, genreId: Long, count: Int) : Future[Unit] = driver.readSession { session =>
     people match {
       case _: Actor =>
         c"""MATCH (p: People {id: ${people.id}})
-        MATCH (g: Genre {id: ${genre.id}})
-        MERGE (p)-[r:KNOWN_FOR_ACTING]->(g)
-          ON CREATE SET r.count = 1
-          ON MATCH SET r.count = r.count+1
+        MATCH (g: Genre {id: $genreId})
+        MERGE (p)-[r:KNOWN_FOR_ACTING {count: $count}]->(g)
      """.query[Unit].execute(session)
       case _: MovieMaker =>
         c"""MATCH (p: People {id: ${people.id}})
-        MATCH (g: Genre {id: ${genre.id}})
-        MERGE (p)-[r:KNOWN_FOR_WORKING]->(g)
-          ON CREATE SET r.count = 1
-          ON MATCH SET r.count = r.count+1
+        MATCH (g: Genre {id: $genreId})
+        MERGE (p)-[r:KNOWN_FOR_WORKING {count: $count}]->(g)
      """.query[Unit].execute(session)
     }
   }
 
-  def addKnowsRelation(people1: People, people2: People) : Future[Unit] = driver.readSession { session =>
-    c"""MATCH (p1: People {id: ${people1.id}})
-        MATCH (p2: People {id: ${people2.id}})
-        MERGE (p1)-[r:KNOWS]-(p2)
-          ON CREATE SET r.count = 1
-          ON MATCH SET r.count = r.count+1
-     """.query[Unit].execute(session)
+  def addKnowsRelation(pId1: Long, pId2: Long, count: Int) : Future[Unit] = driver.readSession { session =>
+    c"""MATCH (p1: People {id: $pId1})
+        MATCH (p2: People {id: $pId2})
+        MERGE (p1)-[r:KNOWS {count: $count}]-(p2)
+     """.query[Unit].single(session)
   }
 
   def addSimilarRelation(movie: Movie, movieId: MovieId) : Future[Unit] = driver.readSession { session =>
@@ -161,6 +134,13 @@ class MovieService(driver: Driver[Future]) {
     c"""MATCH (m1: Movie {id: ${movie.id}})
         MATCH (m2: Movie {id: ${movieId.id}})
         MERGE (m1)-[r:RECOMMENDATIONS]-(m2)
+     """.query[Unit].execute(session)
+  }
+
+  def addMoviesGenres(movie: Movie, genre: Genre) : Future[Unit] = driver.readSession { session =>
+    c"""MATCH (m: Movie {id: ${movie.id}})
+        MATCH (g: Genre {id: ${genre.id}})
+        MERGE (m)-[r:BELONGS_TO]->(g)
      """.query[Unit].execute(session)
   }
 
