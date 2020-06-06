@@ -19,15 +19,6 @@ import scala.concurrent.{Await, Future}
  */
 class AlgorithmService(driver: Driver[Future]) {
 
-  def createConstraints(): Future[Unit] = driver.readSession { session =>
-    c"""
-      CREATE CONSTRAINT ON (m:Movie) ASSERT m.id IS UNIQUE;
-      CREATE CONSTRAINT ON (g:Genre) ASSERT g.id IS UNIQUE;
-      CREATE CONSTRAINT ON (p:People) ASSERT p.id IS UNIQUE;
-      CREATE INDEX ON :Movie(title);
-    """.query[Unit].execute(session)
-  }
-
   /**
    * Create graphs and execute Page Rank with
    * similar and recommended movies as links

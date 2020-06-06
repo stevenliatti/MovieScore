@@ -30,6 +30,15 @@ class MovieService(driver: Driver[Future]) {
     movie.revenue.toDouble / movie.budget.toDouble
   }
 
+  def createConstraints(): Future[Unit] = driver.readSession { session =>
+    c"""
+      CREATE CONSTRAINT ON (m:Movie) ASSERT m.id IS UNIQUE;
+      CREATE CONSTRAINT ON (g:Genre) ASSERT g.id IS UNIQUE;
+      CREATE CONSTRAINT ON (p:People) ASSERT p.id IS UNIQUE;
+      CREATE INDEX ON :Movie(title);
+    """.query[Unit].execute(session)
+  }
+
   def addMovie(movie: Movie): Future[Unit] = driver.readSession { session =>
     val score: Double = computeMovieScore(movie)
 

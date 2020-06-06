@@ -44,7 +44,7 @@ object Main {
     val algorithmService = new AlgorithmService(driver.asScala[Future])
     val movieService = new MovieService(driver.asScala[Future])
 
-    algorithmService.createConstraints()
+    movieService.createConstraints()
     val movies = movieService.readMoviesFromFile("data/movies.json").toList
 
     println("Data file from TMDb read, start first step")

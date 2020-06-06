@@ -14,7 +14,7 @@ package ch.hepia
 object Domain {
 
   trait People {
-    def id: Int
+    def id: Long
     def name: String
     def gender: Int
 
@@ -25,17 +25,17 @@ object Domain {
     }
   }
 
-  case class Genre(id: Int, name: String)
-  case class Actor(id: Int, name: String, gender: Int, order: Int, character: String) extends People
-  case class MovieMaker(id: Int, name: String, gender: Int, job: String) extends People
+  case class Genre(id: Long, name: String)
+  case class Actor(id: Long, name: String, gender: Int, order: Int, character: String) extends People
+  case class MovieMaker(id: Long, name: String, gender: Int, job: String) extends People
   case class Credits(cast: List[Actor], crew: List[MovieMaker])
-  case class MovieId(id: Int)
+  case class MovieId(id: Long)
   case class Similar(results: List[MovieId])
   case class Recommendations(results: List[MovieId])
-  case class Movie(id: Int,
+  case class Movie(id: Long,
                    title: String,
-                   budget: Int,
-                   revenue: Int,
+                   budget: Long,
+                   revenue: Long,
                    genres: List[Genre],
                    credits: Credits,
                    similar: Option[Similar],
