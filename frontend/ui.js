@@ -175,32 +175,44 @@ function initialQuery() {
 /*
  * Neo4j request
  */
-function allMovies() {
-    const q = "MATCH (m:Movie) RETURN m ORDER BY m.score DESC LIMIT 100";
+function bestMovies() {
+    const q = "MATCH r=()-->(m:Movie)-->(g:Genre) RETURN r ORDER BY m.score DESC LIMIT 200";
     updateSearchBar(q);
     viz.renderWithCypher(q);
 }
 
 function movieGenre() {
-    const q = "MATCH p=(m)-[r:BELONGS_TO]->() RETURN p ORDER BY m.score DESC LIMIT 50";
+    const q = "MATCH p=(m)-[r:BELONGS_TO]->() RETURN p ORDER BY m.score DESC LIMIT 100";
     updateSearchBar(q);
     viz.renderWithCypher(q);
 }
 
 function moviePeoplePlayIn() {
-    const q = "MATCH r=(p)-[:PLAY_IN]->() RETURN r ORDER BY p.score DESC LIMIT 50";
+    const q = "MATCH r=(p)-[:PLAY_IN]->(m) RETURN r ORDER BY m.score DESC LIMIT 100";
     updateSearchBar(q);
     viz.renderWithCypher(q);
 }
 
 function moviePeopleWorkIn() {
-    const q = "MATCH r=(p)-[:WORK_IN]->() RETURN r ORDER BY p.score DESC LIMIT 50";
+    const q = "MATCH r=(p)-[:WORK_IN]->(m) RETURN r ORDER BY m.score DESC LIMIT 100";
     updateSearchBar(q);
     viz.renderWithCypher(q);
 }
 
-function allPeople() {
-    const q = "MATCH (p:People) RETURN p ORDER BY p.score DESC LIMIT 500";
+function movieSimilar() {
+    const q = "MATCH r=(m1)-[:SIMILAR]->(m2) RETURN r ORDER BY m1.score DESC LIMIT 100";
+    updateSearchBar(q);
+    viz.renderWithCypher(q);
+}
+
+function movieRecommendations() {
+    const q = "MATCH r=(m1)-[:RECOMMENDATIONS]->(m2) RETURN r ORDER BY m1.score DESC LIMIT 100";
+    updateSearchBar(q);
+    viz.renderWithCypher(q);
+}
+
+function bestPeoples() {
+    const q = "MATCH r=(p:People)-->() RETURN r ORDER BY p.score DESC LIMIT 200";
     updateSearchBar(q);
     viz.renderWithCypher(q);
 }
@@ -260,6 +272,15 @@ function bestScoreMovies() {
         "Title",
         "Score",
         "movie"
+    );
+}
+
+function bestScorePeoples() {
+    bestNodes(
+        `MATCH (p:People) RETURN DISTINCT p.id, p.name, p.score ORDER BY p.score DESC LIMIT 15`,
+        "Name",
+        "Score",
+        "person"
     );
 }
 

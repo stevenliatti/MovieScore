@@ -29,7 +29,7 @@
                     <a href="#movieSubmenu" data-toggle="collapse" aria-expanded="false" class="dropdown-toggle">Movie</a>
                     <ul class="collapse list-unstyled" id="movieSubmenu">
                         <li>
-                            <a onclick="allMovies();">All movies</a>
+                            <a onclick="bestMovies();">Best movies</a>
                         </li>
                         <li>
                             <a onclick="movieGenre();">Movies & genre</a>
@@ -39,6 +39,12 @@
                         </li>
                         <li>
                             <a onclick="moviePeopleWorkIn();">Movie makers</a>
+                        </li>
+                        <li>
+                            <a onclick="movieSimilar();">Similar movies</a>
+                        </li>
+                        <li>
+                            <a onclick="movieRecommendations();">Recommended movies</a>
                         </li>
                         <li>
                             <select class="form-control basicAutoSelectMovie mt-2 searchInput" id="searchMovie" name="simple_select"
@@ -75,7 +81,7 @@
                     <a href="#peopleSubmenu" data-toggle="collapse" aria-expanded="false" class="dropdown-toggle">People</a>
                     <ul class="collapse list-unstyled" id="peopleSubmenu">
                         <li>
-                            <a onclick="allPeople();">All peoples</a>
+                            <a onclick="bestPeoples();">Best peoples</a>
                         </li>
                         <li>
                             <a onclick="knowledgePeople();">Knowledge between people</a>
@@ -225,7 +231,10 @@
                     <a href="#pageTextualReqSubmenu" data-toggle="collapse" aria-expanded="false" class="dropdown-toggle">Textual request</a>
                     <ul class="collapse list-unstyled" id="pageTextualReqSubmenu">
                         <li>
-                            <a onclick="bestScoreMovies();" data-toggle="modal" data-target="#exampleModalLong">Best score movies</a>
+                            <a onclick="bestScoreMovies();" data-toggle="modal" data-target="#exampleModalLong">Best movies by score</a>
+                        </li>
+                        <li>
+                            <a onclick="bestScorePeoples();" data-toggle="modal" data-target="#exampleModalLong">Best peoples by score</a>
                         </li>
                         <li>
                             <a onclick="bestDegreePeoples();" data-toggle="modal" data-target="#exampleModalLong">Best peoples by degree</a>
