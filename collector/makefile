@@ -7,6 +7,9 @@ YESTERDAY = $(shell date --date="yesterday" +%m_%d_%Y)
 
 remote_all: init_remote map_reduce_remote
 
+show_env: .env
+	@cat .env
+
 crawler/target/release/crawler: crawler/src/* crawler/Cargo.toml
 	cd crawler && cargo build --release
 
@@ -26,3 +29,8 @@ init_remote: crawler/target/release/crawler splitter/target/release/splitter
 
 map_reduce_remote:
 	parallel-ssh -t 0 --user $(REMOTE_USER) --hosts $(IPS) -i "cd $(REMOTE_WORKING_DIR); ./map_reduce.sh"
+
+clean:
+	cd crawler && cargo clean
+	cd splitter && cargo clean
+	rm -f movie_ids.json movie_ids.json.gz

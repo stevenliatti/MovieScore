@@ -449,42 +449,82 @@ REMOTE_USER=user ; Utilisateur SSH
 REMOTE_HOST=192.168.1.2 ; IP de la machine distante principale, pour init
 REMOTE_WORKING_DIR=working_dir ; Le répertoire de travail courant
 TMDB_API_KEY=1a2b3c4d5e6f7g8h9i0j ; Une clé API pour TMDb
+THREADS=40 ; Le nombre de threads par machine
 NEXTCLOUD_UPLOAD=https://your.nextcloud.com/qwertz ; Le répertoire Nextcloud
 ```
 
 Un `makefile` est disponible dans `collector` pour exécuter chaque étape de la récupération.
 
 
+## Instance Neo4j
+
+Nous nous sommes servis de [l'image Docker officielle de Neo4j](https://hub.docker.com/_/neo4j) en version 3.5 comme instance de base de données. Un makefile à la racine permet de lancer un container Docker avec ou sans volume pour la sauvegarde des données insérées dans Neo4j. Pour lancer cette instance, il faut au préalable remplir un fichier `.env` de manière analogue à la suivante :
+
+```conf
+NEO4J_AUTH=neo4j/wem2020 ; Authentification Neo4j
+; D'après nos essais, 20G de mémoire sont largement suffisants
+NEO4J_dbms_memory_pagecache_size=20G
+NEO4J_dbms_memory_heap_max__size=20G
+; Plugin pour les algorithmes
+NEO4J_dbms_security_procedures_unrestricted=gds.*
+```
+
 ## Parsing et insertion dans Neo4j
 
-Nous avons réalisé un programme lisant les données brutes en JSON provenant de la collecte de TMDb et qui les insèrent selon nos besoins dans Neo4j. Nous avons choisi Scala comme langage, en raison de ses performances, de la justesse du langage et aussi pour bénéficier de la librairie [spray-json](https://github.com/spray/spray-json) pour la désérialisation du JSON et de [neotypes](https://neotypes.github.io/neotypes/), le driver Neo4j Scala basé sur le driver officiel Java. Le programme est constitué de quatre grandes étapes :
+Nous avons réalisé un programme lisant les données brutes en JSON provenant de la collecte de TMDb et qui les insèrent selon nos besoins dans Neo4j. Nous avons choisi Scala comme langage, en raison de ses performances, de la justesse du langage et aussi pour bénéficier de la librairie [spray-json](https://github.com/spray/spray-json) pour la désérialisation du JSON et de [neotypes](https://neotypes.github.io/neotypes/), le driver Neo4j Scala basé sur le driver officiel Java. Le programme est constitué de six grandes étapes :
 
-1. Parcours des films désérialisés : ajout de chaque film ainsi que création/mise à jour des genres et des *peoples* associés avec leurs relations respectives. Comme il peut y avoir de nombreux *peoples* associés à un film, nous prenons au plus les 30 premiers acteurs d'un film, classés par TMDb selon leur ordre d'importance dans le film et nous sélectionnons les *movie makers* selon une liste arbitraire des jobs les plus représentatifs. C'est également dans cette boucle principale que le score des *peoples* commence à être calculé (somme des fractions des scores des films).
-1. Après avoir inséré tous les films, un deuxième parcours des films est effectué pour leur ajouter leurs films similaires et recommendés respectifs, selon si ces derniers sont également déjà présents dans Neo4j.
-1. Une fois tous les *peoples* insérés, nous divisons le score temporaire par le nombre de films dans lequel ils ont joué.
+1. Création des contraintes sur les types de noeuds
+1. Désérialisation des films en JSON en `case class`es Scala et filtrage sur les jobs des `MovieMaker` et sur le nombre d'acteurs par film
+1. Création de `Map` et `Set` Scala à partir des `Movie`s pour pré-traiter les relations entre les différents noeuds (insertion parallèle de certaines données)
+1. Ajout de tous les noeuds dans Neo4j, sans relations
+1. Ajout des relations entre les noeuds concernés à partir des collections créées en 3.
 1. Les algorithmes choisis sont exécutés sur l'ensemble des données insérées.
 
-Les insertions de noeuds et des relations se font avec le langage de requêtes de Neo4j, [Cypher](https://neo4j.com/developer/cypher-query-language/). À titre d'exemple, ci-dessous se trouve notre méthode Scala pour l'insertion des genres associés à un film :
+Les insertions de noeuds et des relations se font avec le langage de requêtes de Neo4j, [Cypher](https://neo4j.com/developer/cypher-query-language/). À titre d'exemple, ci-dessous se trouvent deux méthodes Scala pour l'insertion d'un film et pour l'insertion d'une relation de similarité entre deux films :
 
 ```scala
-def addGenres(genre: Genre, m: Movie): Future[Unit] = driver.readSession { session =>
-  val f = c"""MERGE (genre: Genre {
-    id: ${genre.id},
-    name: ${genre.name}})""".query[Unit].execute(session)
+def addMovie(movie: Movie) = driver.readSession { session =>
+  val score: Double = computeMovieScore(movie)
+  c"""CREATE (movie: Movie {
+      id: ${movie.id},
+      title: ${movie.title},
+      budget:${movie.budget},
+      revenue:${movie.revenue},
+      score: $score
+   })""".query[Unit].execute(session)
+}
 
-  Await.result(f, Duration.Inf)
-
-  c"""MATCH (m: Movie {id: ${m.id}})
-      MATCH (g: Genre {id: ${genre.id}})
-      MERGE (m)-[r:BELONGS_TO]->(g)
-   """.query[Unit].execute(session)
+def addSimilarRelation(movie: Movie, movieId: MovieId) =
+driver.readSession { session =>
+  c"""MATCH (m1: Movie {id: ${movie.id}})
+      MATCH (m2: Movie {id: ${movieId.id}})
+      MERGE (m1)-[r:SIMILAR]-(m2)
+    """.query[Unit].execute(session)
 }
 ```
 
+Pour reproduire l'opération, il faut créer le répertoire `parser/data`, contenant le fichier `movies.json` récupéré grâce au Collecteur et remplir le fichier `parser/.env` d'une manière analogue à la suivante :
+
+```conf
+NEO4J_HOST=bolt://localhost:7687
+NEO4J_USER=neo4j
+NEO4J_PASSWORD=wem2020
+JVM_RAM=8g
+```
 
 ## Frontend
 
 Nous avons réalisé un frontend web à l'aide de [neovis.js](https://github.com/neo4j-contrib/neovis.js), du [driver Neo4j javascript](https://github.com/neo4j/neo4j-javascript-driver) et de [Bootstrap](https://getbootstrap.com/) pour l'autocomplétion et le design CSS. Notre interface permet d'exécuter des requêtes Cypher directement dans la barre de requêtes ou via des boutons avec requêtes pré-enregistrées et de visualiser les résultats sous forme de graphe, avec des noeuds et arcs de taille et couleurs différentes symbolisant le score des noeuds, les types de noeuds différents, les communautés de *peoples* ou encore la force des liens entre différents noeuds.
+
+Pour lancer le frontend correctement, il faut créer et remplir le fichier `frontend/.env` d'une manière analogue à la suivante :
+
+```conf
+URL_DB=bolt://localhost:7687
+USER=neo4j
+PWD=wem2020
+```
+
+Puis exécuter `make` dans `frontend`.
 
 La requête initiale récupère un échantillon de 500 noeuds de genres, films et *peoples* associés, ordonnés par le score des films :
 ```js
@@ -493,7 +533,7 @@ const INITIAL_QUERY =
     RETURN r ORDER BY m.score LIMIT 500";
 ```
 
-La configuration initiale de neovis.js est la suivante : 
+La configuration initiale de neovis.js est la suivante :
 
 ```js
 var config = {

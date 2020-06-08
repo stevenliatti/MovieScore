@@ -1,14 +1,11 @@
 var viz;
 
-const URL_DB = "bolt://129.194.184.111:7687";
-const USER = "neo4j";
-const PWD = "wem2020";
 const INITIAL_QUERY = "MATCH r=(p:People)-->(m:Movie)-->(g:Genre) RETURN r ORDER BY m.score LIMIT 500";
 const TMDB_URL = "https://www.themoviedb.org/"
 
 const driver = neo4j.v1.driver(
-    'bolt://129.194.184.111',
-    neo4j.v1.auth.basic(USER, PWD)
+    env.URL_DB,
+    neo4j.v1.auth.basic(env.USER, env.PWD)
 )
 
 const session = driver.session()
@@ -22,9 +19,9 @@ function defineConfig() {
 
     var config = {
         container_id: "viz",
-        server_url: URL_DB,
-        server_user: USER,
-        server_password: PWD,
+        server_url: env.URL_DB,
+        server_user: env.USER,
+        server_password: env.PWD,
         labels: {
             "Movie": {
                 "caption": "title",

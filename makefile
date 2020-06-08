@@ -1,25 +1,34 @@
-run_neo4j: neo4j/plugins/neo4j-graph-data-science-1.1.1-standalone.jar
+include .env
+export
+
+show_env: .env show_collector_env show_parser_env
+	@cat .env
+
+show_collector_env:
+	$(MAKE) -C collector show_env
+
+show_parser_env:
+	$(MAKE) -C parser show_env
+
+show_frontend_env:
+	$(MAKE) -C frontend show_env
+
+neo4j: neo4j/plugins/neo4j-graph-data-science-1.1.1-standalone.jar
 	docker run --rm \
 	--publish=7474:7474 --publish=7687:7687 \
 	--volume="$$PWD"/neo4j/conf:/conf \
 	--volume="$$PWD"/neo4j/plugins:/plugins \
-	--env NEO4J_AUTH=neo4j/wem2020 \
-	--env NEO4J_dbms_memory_pagecache_size=4G \
-	--env NEO4J_dbms_memory_heap_max__size=4G \
-	--env NEO4J_dbms_security_procedures_unrestricted=gds.* \
+	--env-file=.env \
 	--user="$$(id -u):$$(id -g)" \
 	neo4j:3.5
 
-run_neo4j_with_vol: neo4j/plugins/neo4j-graph-data-science-1.1.1-standalone.jar
-	docker run --rm \
+neo4j_vol: neo4j/plugins/neo4j-graph-data-science-1.1.1-standalone.jar
+	docker run --rm -d \
 	--publish=7474:7474 --publish=7687:7687 \
 	--volume="$$PWD"/neo4j/conf:/conf \
 	--volume="$$PWD"/neo4j/plugins:/plugins \
 	--volume="$$PWD"/neo4j/data:/data \
-	--env NEO4J_AUTH=neo4j/wem2020 \
-	--env NEO4J_dbms_memory_pagecache_size=4G \
-	--env NEO4J_dbms_memory_heap_max__size=4G \
-	--env NEO4J_dbms_security_procedures_unrestricted=gds.* \
+	--env-file=.env \
 	--user="$$(id -u):$$(id -g)" \
 	neo4j:3.5
 
@@ -29,3 +38,4 @@ neo4j/plugins/neo4j-graph-data-science-1.1.1-standalone.jar:
 	unzip neo4j/plugins/neo4j-graph-data-science-1.1.1-standalone.zip -d neo4j/plugins
 	rm neo4j/plugins/neo4j-graph-data-science-1.1.1-standalone.zip
 
+.PHONY: neo4j
