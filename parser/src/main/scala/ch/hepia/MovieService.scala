@@ -120,7 +120,7 @@ class MovieService(driver: Driver[Future]) {
     c"""MATCH (p1: People {id: $pId1})
         MATCH (p2: People {id: $pId2})
         MERGE (p1)-[r:KNOWS {count: $count}]-(p2)
-     """.query[Unit].single(session)
+     """.query[Unit].execute(session)
   }
 
   def addSimilarRelation(movie: Movie, movieId: MovieId) : Future[Unit] = driver.readSession { session =>

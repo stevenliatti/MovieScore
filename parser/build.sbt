@@ -11,6 +11,5 @@ mainClass := Some("ch.hepia.Main")
 
 libraryDependencies ++= Seq(
   "io.spray" %%  "spray-json" % "1.3.5",
-  "com.github.pureconfig" %% "pureconfig" % "0.9.1",
   "com.dimafeng" %% "neotypes" % neotypesV
 )
