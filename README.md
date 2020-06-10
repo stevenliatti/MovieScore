@@ -633,13 +633,20 @@ Nous avons effectué des tests unitaires au niveau des méthodes critiques et co
 Pour la partie frontend, nous avons effectué une sorte d'audit, en faisant tester l'app à un utilisateur externe au projet, afin d'avoir un retour sur l'expérience utilisateur de l'interface graphique proposée.
 Voici la liste avec les principales fonctionnalités de notre application. Elles ont été testées une à une, et, pour chaque fonctionnalité testée, une colonne correspondante est renseignée si cette fonctionnalité a été validée ou non avec la possibilité de laisser un commentaire (3ème colonne).
 
-Voir exemple ci-dessous :
-
 | Feature    | Validation(OK/KO) | Comment           |
 | ---------  | ----------------- | ----------------- |
-| Navigation | OK                | On comprend facilement comment passer d'une section à une autre |
-| Recherche par nom  | OK                | Autocomplétion OK |
+| UX | OK                | Interface intuitive |
+| Recherche  | OK        | Recherche OK pour les 3 types de noeuds |
+| Autocompletion  | OK        | Autocomplétion OK pour les 3 types de noeuds |
+| Barre de navigation  | OK        | Simple d'utilisation + propose de nombreuses fonctionnalités |
+| Barre de requêtes perso  | OK        | Fonctionnel, pratique si l'on connait le langage Cypher |
 | Zoom       | OK                | Smooth et rapide    |
+| Visualisation du graphe       | OK                | Rapide et effect physiques sur le graphe sympa    |
+| Taille des noeuds en fonction de leurs importance       | OK                | Représentatif    |
+| Personnalisation de l'affichage du graphe       | OK                | Possibilités multiples pour l'affichage des relations et des noeuds attachés    |
+| Personnalisation des algorithmes       | OK                | Plusieurs algorithmes à choix facilitant la visualisation    |
+| Requêtes textuelles | OK                | Informations textuelles interessantes |
+
 
 # Planning envisagé
 
