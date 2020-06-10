@@ -637,15 +637,16 @@ Voici la liste avec les principales fonctionnalités de notre application. Elles
 | ---------  | ----------------- | ----------------- |
 | UX | OK                | Interface intuitive |
 | Recherche  | OK        | Recherche OK pour les 3 types de noeuds |
-| Autocompletion  | OK        | Autocomplétion OK pour les 3 types de noeuds |
+| Autocomplétion  | OK        | Autocomplétion OK pour les 3 types de noeuds |
 | Barre de navigation  | OK        | Simple d'utilisation + propose de nombreuses fonctionnalités |
 | Barre de requêtes perso  | OK        | Fonctionnel, pratique si l'on connait le langage Cypher |
 | Zoom       | OK                | Smooth et rapide    |
-| Visualisation du graphe       | OK                | Rapide et effect physiques sur le graphe sympa    |
-| Taille des noeuds en fonction de leurs importance       | OK                | Représentatif    |
+| Visualisation du graphe       | OK                | Rapide + effects physiques sur le graphe sympa    |
+| Taille des noeuds en fonction de leur importance       | OK                | Représentatif    |
 | Personnalisation de l'affichage du graphe       | OK                | Possibilités multiples pour l'affichage des relations et des noeuds attachés    |
-| Personnalisation des algorithmes       | OK                | Plusieurs algorithmes à choix facilitant la visualisation    |
-| Requêtes textuelles | OK                | Informations textuelles interessantes |
+| Personnalisation des algorithmes       | OK                | Plusieurs algorithmes à choix facilitant la visualisation de l'information   |
+| Requêtes textuelles | OK                | Informations textuelles suffisantes et interessantes |
+| Liens vers TMDb | OK                | Très pratique |
 
 
 # Planning envisagé
