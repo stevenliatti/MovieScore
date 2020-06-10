@@ -1,4 +1,4 @@
-report.pdf: README.md planning
+report.pdf: README.md
 	pandoc -s --highlight-style my_highlight.theme --number-sections README.md -o $@
 
 docker_pandoc: ../README.md

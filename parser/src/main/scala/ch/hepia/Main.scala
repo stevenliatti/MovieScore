@@ -195,27 +195,23 @@ object Main {
     }
 
     // Add acting for each people
-    val peoplesGenresActing = for {
+    for {
       (_, (genresActingCount, _)) <- knownForRelations
       (genreId, (people, count)) <- genresActingCount
     } yield {
-      //println(people, genreId, count)
-      movieService.addKnownForRelation(people, genreId, count)
+      val f = movieService.addKnownForRelation(people, genreId, count)
+      Await.result(f, Duration.Inf)
     }
-    val fPeoplesGenresActing = Future.sequence(peoplesGenresActing)
-    Await.result(fPeoplesGenresActing, Duration.Inf)
     println(java.util.Calendar.getInstance.getTime + " Genres acting relations for peoples added")
 
     // Add working for each people
-    val peoplesGenresWorking = for {
+    for {
       (_, (_, genresWorkingCount)) <- knownForRelations
       (genreId, (people, count)) <- genresWorkingCount
     } yield {
-      //println(people, genreId, count)
-      movieService.addKnownForRelation(people, genreId, count)
+      val f = movieService.addKnownForRelation(people, genreId, count)
+      Await.result(f, Duration.Inf)
     }
-    val fPeoplesGenresWorking = Future.sequence(peoplesGenresWorking)
-    Await.result(fPeoplesGenresWorking, Duration.Inf)
     println(java.util.Calendar.getInstance.getTime + " Genres working relations for peoples added")
 
     // Add knows between each people
@@ -224,12 +220,13 @@ object Main {
         .map { case (l, longs) => (l, longs.length) }
       (peopleId, friendIdWithCount)
     }
-    val knowsPeopleRelation = for {
+    for {
       (p1, p2Count) <- knows
       (p2, count) <- p2Count
-    } yield movieService.addKnowsRelation(p1, p2, count)
-    val fKnowsPeopleRelation = Future.sequence(knowsPeopleRelation)
-    Await.result(fKnowsPeopleRelation, Duration.Inf)
+    } yield {
+      val f = movieService.addKnowsRelation(p1, p2, count)
+      Await.result(f, Duration.Inf)
+    }
     println(java.util.Calendar.getInstance.getTime + " Knows relations for peoples added")
 
     // Sixth step, run some algorithms on all data

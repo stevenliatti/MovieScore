@@ -12,16 +12,16 @@ geometry : margin = 3cm
 
 
 # Buts
-Les buts de ce projet sont de déterminer les scores de films selon leur ratio revenu sur budget, de déterminer l'influence qu'ils ont sur les "peoples" (acteurs et membres de l'équipe de réalisation) qui ont participé aux-dits films et montrer les genres de films les plus populaires.
+Les objectifs de ce projet sont de déterminer les scores de films selon leur ratio, calculé ainsi `ratio = revenu / budget`, de déterminer l'influence qu'ils ont sur les "*peoples*" (acteurs et membres de l'équipe de réalisation) qui ont participé aux-dits films et montrer les genres de films les plus populaires.
 
 # Contexte et objectifs
-Ce projet se déroule dans le cadre du cours de Web Mining du master MSE HES-SO. L'objectif principal du projet est de visualiser, sous forme graphe, les relations entre les films, leurs genres et les peoples. Nous appliquons des algorithmes choisis pour déterminer les noeuds du graphe les plus importants, trouver les plus courts chemins entre peoples et former des communautés de films, peoples ou genres.
+Ce projet se déroule dans le cadre du cours de Web Mining du master MSE HES-SO. L'objectif principal du projet est de visualiser, sous forme graphe, les relations entre les films, leurs genres et les *peoples*. Nous appliquons des algorithmes choisis pour déterminer les noeuds du graphe les plus importants, trouver les plus courts chemins entre *peoples* et former des communautés de films, *peoples* ou genres.
 
 # Données
 
 ## TMDb
 
-Nous utilisons les données provenant de [The Movie Database (TMDb)](https://www.themoviedb.org/) à l'aide de son [API](https://developers.themoviedb.org/3/getting-started). À partir des données d'un film, nous avons tous les éléments nécessaires pour déterminer son score et ses relations aux peoples et genres associés. Ci-dessous un exemple de données retournées par l'API pour le film *Pirates of the Caribbean: The Curse of the Black Pearl* :
+Nous utilisons les données provenant de [The Movie Database (TMDb)](https://www.themoviedb.org/) à l'aide de son [API](https://developers.themoviedb.org/3/getting-started). À partir des données d'un film, nous avons tous les éléments nécessaires pour déterminer son score et ses relations aux *peoples* et genres associés. Ci-dessous un exemple de données retournées par l'API pour le film *Pirates of the Caribbean: The Curse of the Black Pearl* :
 
 ```json
 {
@@ -94,7 +94,7 @@ Nous utilisons les données provenant de [The Movie Database (TMDb)](https://www
 }
 ```
 
-Nous pouvons voir que nous avons les informations relatives au budget et revenu généré par le film, ainsi que l'ordre d'importance des acteurs ayant joué dedans et la liste des membres de l'équipe de réalisation, avec pour chacun la fonction endossée pour ce film. Nous avons également la liste des genres auxquels le film appartient, une liste de mots-clés concernant ce film et une liste de films similaires (basée sur les genres et mots-clés). Cette information peut être récupérée sur une URL de ce genre :
+Nous pouvons voir que nous avons les informations relatives au budget et revenu généré par le film, ainsi que la liste des acteurs, triée par ordre d'importance de leur rôle dans le film et la liste des membres de l'équipe de réalisation, avec pour chacun la fonction endossée pour ce film. Nous avons également la liste des genres auxquels le film appartient, une liste de mots-clés concernant ce film et une liste de films similaires (basée sur les genres et mots-clés). Cette information peut être récupérée sur une URL de ce genre :
 
 ```bash
 https://api.themoviedb.org/3/movie/$id?api_key=$key&language=en-US&append_to_response=credits%2Ckeywords%2Csimilar
@@ -128,9 +128,9 @@ La première étape est d'obtenir tous les films disponibles sur TMDb. Pour cela
 
 Nous devons donc parcourir ce fichier, comportant plus de 500'000 films et récupérer les informations au format JSON.
 
-## Base de données orientée graphe
+## Base de données orientée graphe avec Neo4j
 
-Après avoir récupéré et épuré les données brutes de TMDb, nous les stockons dans une base de données orientée graphe. La structure de graphe est particulièrement intéressante pour décrire les relations entre différentes entités, pour trouver des communautés autour de certains noeuds et pour avoir un joli rendu visuel. L'image suivante décrit ces noeuds et relations :
+Après avoir récupéré et épuré les données brutes de TMDb, nous les stockons dans [Neo4j](https://neo4j.com/). La structure de graphe est particulièrement intéressante pour décrire les relations entre différentes entités, pour trouver des communautés autour de certains noeuds et pour avoir un joli rendu visuel. L'image suivante décrit ces noeuds et relations :
 
 ![Relations entre noeuds du graphe](report/relations.svg)
 
@@ -153,7 +153,7 @@ Nous avons 3 types de noeuds (dont 2 sous-types) :
     - `gender`
     - `score` : redistribution d'une fraction des scores des films dans lequel ce `People` apparait divisé par ce même nombre de films
 
-Nous avons appliqué ces contraintes sur les trois types de noeuds :
+Nous avons appliqué ces contraintes sur les trois types de noeuds, qui rendent l'id de TMDb unique et créent également un index sur cet id :
 ```SQL
 CREATE CONSTRAINT ON (m:Movie) ASSERT m.id IS UNIQUE;
 CREATE CONSTRAINT ON (g:Genre) ASSERT g.id IS UNIQUE;
@@ -173,15 +173,15 @@ Nous avons 8 types de relations principales :
 - `SIMILAR` : relie chaque `Movie` à la liste de ses films semblables selon les critères TMDb
 - `RECOMMENDATIONS` : relie chaque `Movie` à la liste de ses films recommandés selon les utilisateurs de TMDb
 
-Nous calculé (voir section suivante) 3 relations supplémentaires :
+Nous avons calculé (voir section suivante) 3 relations supplémentaires, avec [l'algorithme de Jaccard](https://fr.wikipedia.org/wiki/Indice_et_distance_de_Jaccard) sur les similarités entre noeuds :
 
 - `SIMILAR_MOVIES_ALGO` : relie chaque `Movie` à la liste de ses films semblables selon la similarité des genres en commun calculée avec Neo4j avec un attribut `score`
-- `SIMILAR_FOR_ACTING` : relie chaque `People` à la liste des *peoples* semblables selon la similarité des genres en commun calculée avec Neo4j avec un attribut `score`
-- `SIMILAR_FOR_WORKING` : relie chaque `People` à la liste des *peoples* semblables selon la similarité des genres en commun calculée avec Neo4j avec un attribut `score`
+- `SIMILAR_FOR_ACTING` : relie chaque `People/Actor` à la liste des acteurs semblables selon la similarité des genres en commun calculée avec Neo4j avec un attribut `score`
+- `SIMILAR_FOR_WORKING` : relie chaque `People/MovieMaker` à la liste des *movie makers* semblables selon la similarité des genres en commun calculée avec Neo4j avec un attribut `score`
 
 ## Application d'algorithmes sur le graphe
 
-Neo4j inclu par défaut [plusieurs algorithmes](https://neo4j.com/docs/graph-data-science/1.1/algorithms/) de graphe, à appliquer sur les noeuds et/ou arcs du graphe. Nous en avons appliqués certains sur nos données. Certains algorithmes, comme Page Rank, nécessitent la création d'un sous-graphe contenant les noeuds et les relations impliqués dans l'algorithme / calcul lui-même.
+Neo4j inclu par défaut [plusieurs algorithmes](https://neo4j.com/docs/graph-data-science/1.1/algorithms/) de graphe, à appliquer sur les noeuds et/ou arcs du graphe. Nous en avons appliqués quelques uns sur nos données. Certains algorithmes, comme Page Rank, nécessitent la création d'un sous-graphe contenant les noeuds et les relations impliqués dans l'algorithme.
 
 ### Algorithmes de centralité
 
@@ -225,7 +225,7 @@ CALL gds.pageRank.write('pagerank-movie-recommendations', {
 
 #### Degré de centralité
 
-Pour les *peoples* nous nous sommes servis du [Degree Centrality](https://neo4j.com/docs/graph-data-science/1.1/algorithms/degree-centrality/) algorithme pour ajouter un nouvel attribut, le score `knowsDegree` aux noeuds `People` selon la relation récursive `KNOWS`.
+Pour les *peoples* nous nous sommes servis du [Degree Centrality](https://neo4j.com/docs/graph-data-science/1.1/algorithms/degree-centrality/) algorithme, qui pour rappel compte le nombre d'arcs ou arêtes entrants et sortants d'un noeud, pour ajouter un nouvel attribut, le score `knowsDegree` aux noeuds `People` selon la relation récursive `KNOWS`.
 
 ```
 // calcul le Degree Centrality pour les People avec KNOWS
@@ -282,7 +282,7 @@ YIELD communityCount, modularity, modularities;
 
 ### Algorithmes de similarité entre noeuds
 
-Nous avons également appliqué l'algorithme [Node Similarity](https://neo4j.com/docs/graph-data-science/1.1/algorithms/node-similarity/) sur les films et les *peoples* selon les genres vers lesquels ils pointent. Pour les films, la nouvelle relation `SIMILAR_MOVIES_ALGO` est proche de `SIMILAR` déjà existante, mais il peut être intéressant de voir les différences. Les *peoples* gagnent quant à eux les relations vers les genres nommés `SIMILAR_FOR_ACTING` et `SIMILAR_FOR_WORKING` selon leur ressemblance en fonction des genres dans lesquels ils ont joué / travaillé.
+Nous avons également appliqué l'algorithme [Node Similarity](https://neo4j.com/docs/graph-data-science/1.1/algorithms/node-similarity/) sur les films et les *peoples* selon les genres vers lesquels ils pointent. Pour les films, la nouvelle relation `SIMILAR_MOVIES_ALGO` est proche de `SIMILAR` déjà existante et fournie par TMDb, mais il peut être intéressant de voir les différences. Les *peoples* gagnent quant à eux les relations vers les genres nommés `SIMILAR_FOR_ACTING` et `SIMILAR_FOR_WORKING` selon leur ressemblance en fonction des genres dans lesquels ils ont joué / travaillé.
 
 ```
 // Création du sous-graphe
@@ -324,7 +324,7 @@ CALL gds.nodeSimilarity.write('people-known-for-working-node-similar', {
 
 ### Algorithmes de plus court chemin
 
-Nous nous sommes servis de l'algorithme [Shortest Path](https://neo4j.com/docs/cypher-manual/current/execution-plans/shortestpath-planning/) inclu dans Cypher directement dans l'interface (voir section Frontend) pour visualiser le plus court chemin entre deux *peoples* via leur relation `KNOWS`.
+Nous nous sommes servis de l'algorithme [Shortest Path](https://neo4j.com/docs/cypher-manual/current/execution-plans/shortestpath-planning/) inclu dans Cypher, directement dans l'interface (voir section Frontend), pour visualiser le plus court chemin entre deux *peoples* via leur relation `KNOWS`.
 
 ```
 MATCH (p1:People {name: 'Brad Pitt'}), (p2:People {name: 'Johnny Depp'}),
@@ -336,7 +336,7 @@ RETURN p
 
 ![Architecture](report/architecture.svg)
 
-Tout d'abord, un programme est dédié à la récupération de données proprement dites, à partir de l'API fournissant les données en JSON, enregistrant les données pour les films ayant les champs revenu et budget valides. Ensuite, ces données seront manipulées et insérées dans la base de donnée choisie de manière cohérente et selon les besoins de l'interface. Finalement, une interface graphique sera implémentée pour visualiser les graphes obtenus et exécuter des requêtes à la base de données.
+Tout d'abord, un programme est dédié à la récupération de données proprement dites (`Crawler`), à partir de l'API fournissant les données en JSON, enregistrant les données pour les films ayant les champs revenu et budget valides. Ensuite, ces données seront manipulées et insérées dans la base de donnée choisie de manière cohérente et selon les besoins de l'interface (`Parser`). Finalement, une interface graphique sera implémentée pour visualiser les graphes obtenus et exécuter des requêtes à la base de données (`Frontend`).
 
 ## Uses cases
 Voici la liste des principaux *uses cases* du système :
@@ -347,11 +347,11 @@ Voici la liste des principaux *uses cases* du système :
 - Lister les différents films répertoriés dans notre base
 - Rechercher films, *peoples* ou genres
 - Visualiser les communautés d'acteurs, de genre ou de films qui ont des critères communs
-- Visualiser le plus court chemin entre deux entités
+- Visualiser le plus court chemin entre deux *peoples*
 
-# Technologies
+# Analyse technologique préliminaire
 
-Les langages et technologies envisagés sont Scala et/ou Rust pour la partie développement, pour la justesse, l'efficacité et/ou la performance, et OrientDB, ArangoDB ou Neo4j pour la base de données, avec leur propres langages de requêtes. Différents outils pour le frontend / visualisation sont également comparés.
+Les langages et technologies envisagés sont Scala et/ou Rust pour la partie développement, pour la justesse, l'efficacité et/ou la performance, et [OrientDB](https://orientdb.com/), [ArangoDB](https://www.arangodb.com/) ou [Neo4j](https://neo4j.com/) pour la base de données, avec leur propres langages de requêtes. Différents outils pour le frontend / visualisation sont également comparés.
 
 
 ## Bases de données
@@ -378,7 +378,7 @@ Nous envisageons de réaliser l'interface sous forme de page web montrant le gra
 # Implémentation
 
 ## Features
-Voici la liste des différentes fonctionnalités que nous allons réaliser dans le cadre de ce projet :
+Voici la liste des différentes fonctionnalités que nous avons réalisé dans le cadre de ce projet :
 
 - Backend :
 
@@ -386,6 +386,8 @@ Voici la liste des différentes fonctionnalités que nous allons réaliser dans 
     - Traitement de ces données pour sélectionner uniquement ce dont nous avons besoin
     - Calcul d'un score pour les différents films
     - Insertion des données dans une base de données orientée graphe
+    - Création des relations entre les entités
+    - Application d'algorithmes sur les données insérées
 
 - Frontend :
 
@@ -402,7 +404,7 @@ Nous avions plusieurs stratégies disponibles pour réaliser notre collecteur de
 
 ### Approche naïve avec bash
 
-Pour rappel, comme décrit dans la section Données, nous disposons d'un fichier d'environ 500'000 lignes, contenant tous les ids des films disponibles, comme l'illustre un extrait ci-dessous :
+Pour rappel, comme décrit dans la section données, nous disposons d'un fichier d'environ 500'000 lignes, contenant tous les IDs des films disponibles, comme l'illustre un extrait ci-dessous :
 
 ```json
 {"id":3924,"original_title":"Blondie","popularity":2.569,"video":false}
@@ -410,7 +412,7 @@ Pour rappel, comme décrit dans la section Données, nous disposons d'un fichier
 {"id":5,"original_title":"Four Rooms","popularity":13.013,"video":false}
 ```
 
-Pour rapidement tester l'automatisation de la récupération de toutes les données des films, nous avons concocté le script bash suivant, qui lit ce fichier d'ids, pour chaque id effectue une requête HTTP à l'API TMDb avec `curl`, puis écrit chaque réponse dans le même fichier, un film/réponse par ligne :
+Pour rapidement tester l'automatisation de la récupération de toutes les données des films, nous avons concocté le script bash suivant, qui lit ce fichier d'IDs, pour chaque id effectue une requête HTTP à l'API TMDb avec `curl`, puis écrit chaque réponse dans le même fichier, un film/réponse par ligne :
 
 ```bash
 #!/usr/bin/env bash
@@ -429,9 +431,9 @@ Constatant que ce script ne prenait pas en compte les requêtes avec erreur et s
 
 ### Approche robuste et efficace : programme Rust "distribué"
 
-Jusqu'à fin 2019, l'API TMDb avait une limite d'utilisation à 40 requêtes sur 10 secondes, ou 4 requêtes par seconde. Mais depuis le début de l'année, il n'y a plus de limite. Nous pouvons donc "bombarder" l'API pour récupérer les données aussi vite que désiré. Pour ce faire, nous avons réalisé un `crawler` multi threads en Rust. Le choix de Rust a été fait pour ses performances, la justesse du code obtenu et pour pratiquer le langage également. Nous nous sommes servis de différents *crates* Rust, comme [reqwest](https://crates.io/crates/reqwest) pour les requêtes HTTP, [serde](https://crates.io/crates/serde) et [serde_json](https://crates.io/crates/serde_json) pour la sérialisation du JSON et de la librairie standard Rust pour la gestion de la concurrence (via les [channels](https://doc.rust-lang.org/rust-by-example/std_misc/channels.html)). Chaque film récupéré est désérialisé et les conditions suivantes sont testées :
+Jusqu'à fin 2019, l'API TMDb avait une limite d'utilisation à 40 requêtes sur 10 secondes, ou 4 requêtes par seconde. Mais depuis le début de l'année, il n'y a plus de limite. Nous pouvons donc "bombarder" l'API pour récupérer les données aussi vite que désiré. Pour ce faire, nous avons réalisé un `crawler` multi threads en Rust. Le choix de Rust a été fait pour ses performances, la justesse du code obtenu et pour pratiquer le langage également. Nous nous sommes servis de différents *crates* Rust, comme [reqwest](https://crates.io/crates/reqwest) pour les requêtes HTTP, [serde](https://crates.io/crates/serde) et [serde_json](https://crates.io/crates/serde_json) pour la (dé)sérialisation du JSON et de la librairie standard Rust pour la gestion de la concurrence (via les [channels](https://doc.rust-lang.org/rust-by-example/std_misc/channels.html)). Chaque film récupéré est désérialisé et les conditions suivantes sont testées :
 
-- champs "budget" et "revenu" supérieurs à 1000 (seuil défini arbitrairement)
+- champs "budget" et "revenu" supérieurs à 1000 (dollars, seuil défini arbitrairement)
 - liste de genres non vide
 - liste des *peoples* non vide
 - liste des films similaires non vide
@@ -439,7 +441,7 @@ Jusqu'à fin 2019, l'API TMDb avait une limite d'utilisation à 40 requêtes sur
 
 Si ces conditions sont remplies, le film est gardé pour être écrit dans un fichier. Nous avions donc une version améliorée du script bash, plus rapide, robuste et multi core.
 
-Pour accélérer davantage la récupération, nous avions à disposition via `ssh` quelques 70 machines de bureau (Intel 4 cores / 8 threads, 32 Go de RAM, SSD) reliées à internet par des interfaces de 100 Mb/s ou 1 Gb/s. A l'aide d'un deuxième petit programme Rust, le `splitter`, et de divers commandes Linux comme `parallel-ssh`, nous avons pu séparer le fichier d'ids des films en autant de parts égales que de machines disponibles. Chaque machine a lancé le crawler sur 20 threads avec un fichier d'ids réduit, différent pour chaque machine. Nous avions donc environ l'équivalent de 70 * 20 = 1400 scripts bash initiaux qui récupéraient les informations voulues sur les 500'000 films de TMDb. En quelques minutes, les crawlers terminaient leur job. Avec un dernier script `reduce.sh` et de [`cloudsend.sh`](https://github.com/tavinus/cloudsend.sh), nous avons pu récupérer tous les fichiers produits contenant les informations complètes d'un film, un film par ligne, sur un compte nextcloud en notre possession.
+Pour accélérer davantage la récupération, nous avions à disposition via `ssh` quelques 70 machines de bureau (Intel 4 cores / 8 threads, 32 Go de RAM, SSD) reliées à internet par des interfaces de 100 Mb/s ou 1 Gb/s. A l'aide d'un deuxième petit programme Rust, le `splitter`, et de divers commandes Linux comme `parallel-ssh`, nous avons pu séparer le fichier d'IDs des films en autant de parts égales que de machines disponibles. Chaque machine a lancé le crawler sur 20 threads avec un fichier d'IDs réduit, différent pour chaque machine. Nous avions donc environ l'équivalent de 70 * 20 = 1400 scripts bash initiaux qui récupéraient les informations voulues sur les 500'000 films de TMDb. En quelques minutes, les crawlers terminaient leur job. Avec un dernier script `map_reduce.sh` et de [`cloudsend.sh`](https://github.com/tavinus/cloudsend.sh), nous avons pu récupérer tous les fichiers produits contenant les informations complètes d'un film, un film par ligne, sur un compte nextcloud en notre possession.
 
 Pour reproduire cette récupération, vous devez disposer de machines GNU/Linux connectées à internet, que vous pouvez contrôler par `ssh`, dont le répertoire `home` est synchronisé sur chacune et remplir le fichier `collector/.env` d'une manière analogue à la suivante :
 
@@ -449,7 +451,7 @@ REMOTE_USER=user ; Utilisateur SSH
 REMOTE_HOST=192.168.1.2 ; IP de la machine distante principale, pour init
 REMOTE_WORKING_DIR=working_dir ; Le répertoire de travail courant
 TMDB_API_KEY=1a2b3c4d5e6f7g8h9i0j ; Une clé API pour TMDb
-THREADS=40 ; Le nombre de threads par machine
+THREADS=20 ; Le nombre de threads par machine
 NEXTCLOUD_UPLOAD=https://your.nextcloud.com/qwertz ; Le répertoire Nextcloud
 ```
 
@@ -607,9 +609,9 @@ var config = {
 };
 ```
 
-Tous les noeuds et relations sont décrits et la plupart des tailles de noeuds épaisseurs d'arcs sont configurées pour correspondre à des attributs de noeuds ou de relations comme le score ou le compteur de relations.
+Tous les noeuds et relations sont décrits et la plupart des tailles de noeuds et épaisseurs d'arcs sont configurées pour correspondre à des attributs de noeuds ou de relations comme le score ou le compteur de relations.
 
-Trois sections pour les films, les genres et les *peoples* sont disponibles pour exécuter des requêtes sur ces types de noeuds propres ainsi que trois champs input où l'utilisateur peut entrer le nom d'un film, genre ou *people* et obtenir les relations et noeuds associés au nom entré. Des cases à cocher invitent à activer ou désactiver l'affichage de certaines relations. L'autocomplétion est active sur les champs input.
+Trois sections différentes, une pour les films, une pour les genres et une pour les *peoples* sont disponibles pour exécuter des requêtes sur ces types de noeuds propres ainsi que trois champs input où l'utilisateur peut entrer le nom d'un film, genre ou *people* et obtenir les relations et noeuds associés au nom entré. Des cases à cocher invitent à activer ou désactiver l'affichage de certaines relations. L'autocomplétion est active sur les champs input.
 
 ![Movie](report/images-frontend/movie.png)
 
@@ -621,23 +623,23 @@ Un input permet de visualiser la communauté d'un *people*.
 
 ![Movie](report/images-frontend/people-community.png)
 
-Certaines requêtes peuvent également être visualisées sous forme de tableau, comme la liste des meilleurs films selon leur score.
+Certaines requêtes peuvent également être visualisées sous forme de tableau, comme la liste des meilleurs films selon leur score, car elles sont naturellement présentables sous forme de tableau.
 
 ![Movie](report/images-frontend/textual-request.png)
 
 
-## Test de validation du projet
-En ce qui concerne la phase de test, nous avons prévu d'effectuer des tests unitaires au niveau des méthodes critiques et complexes, notament celles visant à interroger la base de données.
-Pour la partie frontend, nous avons prévu d'effectuer une sorte d'audit, en faisant tester l'app à utilisateur externe au projet, afin d'avoir un retour sur l'expérience utilisateur de l'interface graphique proposée.
-Une fois l'app développée, nous avons prévu une liste (ci-dessous) avec les principales fonctionnalités de notre application. Elles seront testées une à une, et, pour chaque fonctionnalité testée, une colonne correspondante sera renseignée si cette fonctionnalité a été validée ou non avec la possibilité de laisser un commentaire (3ème colonne).
+## Tests et validation du projet
+Nous avons effectué des tests unitaires au niveau des méthodes critiques et complexes, notament celles visant à interroger la base de données.
+Pour la partie frontend, nous avons effectué une sorte d'audit, en faisant tester l'app à un utilisateur externe au projet, afin d'avoir un retour sur l'expérience utilisateur de l'interface graphique proposée.
+Voici la liste avec les principales fonctionnalités de notre application. Elles ont été testées une à une, et, pour chaque fonctionnalité testée, une colonne correspondante est renseignée si cette fonctionnalité a été validée ou non avec la possibilité de laisser un commentaire (3ème colonne).
 
 Voir exemple ci-dessous :
 
-| Feature   | Validation(OK/KO) | Comment           |
-| --------- | ----------------- | ----------------- |
-| Search    | OK                | Request are fast  |
-| Zoom      | OK                | With the mouse    |
-|           |                   |                   |
+| Feature    | Validation(OK/KO) | Comment           |
+| ---------  | ----------------- | ----------------- |
+| Navigation | OK                | On comprend facilement comment passer d'une section à une autre |
+| Recherche par nom  | OK                | Autocomplétion OK |
+| Zoom       | OK                | Smooth et rapide    |
 
 # Planning envisagé
 
@@ -651,3 +653,25 @@ Voir exemple ci-dessous :
 | Analyse algos graphes  | Choix final des algorithmes de graphes                                    |
 | Frontend               | GUI disponible pour l'utilisateur final, avec les contrôles désirés       |
 | Rapport                | Version définitive du rapport                                             |
+
+
+# Conclusion
+
+## Bilan
+
+Positif:
+- Globalement, c'était un chouette projet sur lequel travailler ; nous avons découvert de nouvelles technologies, en particulier Neo4j et Cypher et les bases de données orientées graphe.
+- Neovis est simple à prendre en main et offre rapidement des jolis résultats visuels.
+- Le traitement d'autant de données nous a forcé à penser notre code de manière parallèle.
+
+Négatif :
+- Neo4j est un puissant système de base de données, gratuit et libre sous sa version *community*, mais on s'aperçoit qu'on a besoin de la version *entreprise* assez rapidement pour des tâches plus avancées, comme la gestion des rôles utilisateur ou pour l'usage de machines / instances plus puissantes.
+- Le driver Scala neotypes n'est pas forcément simple à l'usage et bien documenté. De plus, il repose sur une ancienne version du driver Java officiel de Neo4j.
+- Même si Neovis est simple et facile à prendre en main, il manque un peu de personnalisation, nous pourrions obtenir un meilleur résultat visuel en se servant de vis.js (la librairie sur laquelle repose Neovis), mais il faudrait implémenter la partie de connexion à Neo4j.
+
+
+## Améliorations
+
+- La principale amélioration serait d'optimiser le parser pour augmenter ses performances : en effet, nous avons implémenté une version qui tire profit au maximum de l'aspect concurrent du code, mais pour prendre en compte les contraintes de l'ordre d'insertion (avant de créer les relations, il faut disposer des noeuds), et à cause d'exceptions à répétition, dues à une très grande montée en charge, nous avons été obligés de rendre séquentiel certaines parties du parser.
+- Nous pourrions nous baser sur une librairie graphique dédiée proposant des aspects visuels plus poussés (comme une image pour les noeuds, couleurs des relations, etc.) et se passer de Neovis.js.
+
