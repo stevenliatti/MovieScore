@@ -392,11 +392,15 @@ Voici la liste des différentes fonctionnalités que nous avons réalisé dans l
 - Frontend :
 
     - Visualisation des données sous forme d'interface graphique représentant un graphe
+    - Visualisation des données sous forme textuelle dans le cas ou ce format est plus adapté
+    - Proposition d'une liste de requêtes interessantes pour chaque type de noeud
+    - Mise en place d'options et paramètres configurables par l'utilisateur pour afficher les différentes relations et noeuds
+    - Recherche spécifique (film, acteur, genre)
+    - Présentation des films en fonction de leurs scores respectifs
+    - Possibilité d'exécuter ses propres requêtes Cypher
     - Regroupement des données en fonction de certains critères (genre, film etc.)
     - Regroupement des acteurs en fonction des genres des films dans lesquels ils ont joué
     - Création de communautés
-    - Recherche spécifique (film, acteur etc.)
-    - Présentation des films en fonction de leurs scores respectifs
 
 ## Collecteur de données
 
@@ -623,7 +627,7 @@ Un input permet de visualiser la communauté d'un *people*.
 
 ![Movie](report/images-frontend/people-community.png)
 
-Certaines requêtes peuvent également être visualisées sous forme de tableau, comme la liste des meilleurs films selon leur score, car elles sont naturellement présentables sous forme de tableau.
+Certaines requêtes peuvent également être visualisées sous forme de tableau, comme la liste des meilleurs films selon leur score, car elles sont naturellement plus lisible textuellement.
 
 ![Movie](report/images-frontend/textual-request.png)
 
@@ -668,7 +672,7 @@ Voici la liste avec les principales fonctionnalités de notre application. Elles
 ## Bilan
 
 Positif:
-- Globalement, c'était un chouette projet sur lequel travailler ; nous avons découvert de nouvelles technologies, en particulier Neo4j et Cypher et les bases de données orientées graphe.
+- Globalement, nous avons pris du plaisir à travailler sur ce projet ; nous avons découvert de nouvelles technologies, en particulier Neo4j et Cypher et les bases de données orientées graphe.
 - Neovis est simple à prendre en main et offre rapidement des jolis résultats visuels.
 - Le traitement d'autant de données nous a forcé à penser notre code de manière parallèle.
 
@@ -680,6 +684,6 @@ Négatif :
 
 ## Améliorations
 
-- La principale amélioration serait d'optimiser le parser pour augmenter ses performances : en effet, nous avons implémenté une version qui tire profit au maximum de l'aspect concurrent du code, mais pour prendre en compte les contraintes de l'ordre d'insertion (avant de créer les relations, il faut disposer des noeuds), et à cause d'exceptions à répétition, dues à une très grande montée en charge, nous avons été obligés de rendre séquentiel certaines parties du parser.
+- La principale amélioration serait d'optimiser le parser pour augmenter ses performances : en effet, nous avons implémenté une version qui tire profit au maximum de l'aspect concurrent du code, mais pour prendre en compte les contraintes de l'ordre d'insertion (avant de créer les relations, il faut disposer des noeuds), et à cause d'exceptions dues à une très grande montée en charge lorsque le code est concurrent, nous avons été obligés de rendre séquentiel certaines parties du parser.
 - Nous pourrions nous baser sur une librairie graphique dédiée proposant des aspects visuels plus poussés (comme une image pour les noeuds, couleurs des relations, etc.) et se passer de Neovis.js.
 
