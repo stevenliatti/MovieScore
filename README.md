@@ -393,7 +393,7 @@ Voici la liste des différentes fonctionnalités que nous avons réalisé dans l
 
     - Visualisation des données sous forme d'interface graphique représentant un graphe
     - Visualisation des données sous forme textuelle dans le cas ou ce format est plus adapté
-    - Proposition d'une liste de requêtes interessantes pour chaque type de noeud
+    - Proposition d'une liste de requêtes intéressantes pour chaque type de noeud
     - Mise en place d'options et paramètres configurables par l'utilisateur pour afficher les différentes relations et noeuds
     - Recherche spécifique (film, acteur, genre)
     - Présentation des films en fonction de leurs scores respectifs
@@ -627,7 +627,7 @@ Un input permet de visualiser la communauté d'un *people*.
 
 ![Movie](report/images-frontend/people-community.png)
 
-Certaines requêtes peuvent également être visualisées sous forme de tableau, comme la liste des meilleurs films selon leur score, car elles sont naturellement plus lisible textuellement.
+Certaines requêtes peuvent également être visualisées sous forme de tableau, comme la liste des meilleurs films selon leur score, car elles sont naturellement plus lisibles textuellement.
 
 ![Movie](report/images-frontend/textual-request.png)
 
@@ -645,11 +645,11 @@ Voici la liste avec les principales fonctionnalités de notre application. Elles
 | Barre de navigation  | OK        | Simple d'utilisation + propose de nombreuses fonctionnalités |
 | Barre de requêtes perso  | OK        | Fonctionnel, pratique si l'on connait le langage Cypher |
 | Zoom       | OK                | Smooth et rapide    |
-| Visualisation du graphe       | OK                | Rapide + effects physiques sur le graphe sympa    |
+| Visualisation du graphe       | OK                | Rapide + effets physiques sur le graphe sympa    |
 | Taille des noeuds en fonction de leur importance       | OK                | Représentatif    |
 | Personnalisation de l'affichage du graphe       | OK                | Possibilités multiples pour l'affichage des relations et des noeuds attachés    |
 | Personnalisation des algorithmes       | OK                | Plusieurs algorithmes à choix facilitant la visualisation de l'information   |
-| Requêtes textuelles | OK                | Informations textuelles suffisantes et interessantes |
+| Requêtes textuelles | OK                | Informations textuelles suffisantes et intéressantes |
 | Liens vers TMDb | OK                | Très pratique |
 
 
@@ -684,6 +684,6 @@ Négatif :
 
 ## Améliorations
 
-- La principale amélioration serait d'optimiser le parser pour augmenter ses performances : en effet, nous avons implémenté une version qui tire profit au maximum de l'aspect concurrent du code, mais pour prendre en compte les contraintes de l'ordre d'insertion (avant de créer les relations, il faut disposer des noeuds), et à cause d'exceptions dues à une très grande montée en charge lorsque le code est concurrent, nous avons été obligés de rendre séquentiel certaines parties du parser.
+- La principale amélioration serait d'optimiser le parser pour augmenter ses performances : en effet, nous avons implémenté une version qui tire profit au maximum de l'aspect concurrent du code, mais pour prendre en compte les contraintes de l'ordre d'insertion (avant de créer les relations, il faut disposer des noeuds), et à cause d'exceptions dues à une très grande montée en charge lorsque le code est concurrent, nous avons été obligés de rendre séquentielles certaines parties du parser.
 - Nous pourrions nous baser sur une librairie graphique dédiée proposant des aspects visuels plus poussés (comme une image pour les noeuds, couleurs des relations, etc.) et se passer de Neovis.js.
 
